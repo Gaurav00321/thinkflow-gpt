@@ -35,11 +35,115 @@ type Message = {
   timestamp: Date;
 };
 
+// ThinkFlowGPT identity constants - IMMUTABLE & NON-MODIFIABLE
+const THINKFLOW_IDENTITY = {
+  name: "ThinkFlowGPT",
+  founder: "Gaurav Upadhyay",
+  version: "1.0.0",
+  securityLevel: "maximum",
+  organization: "amTop",
+  founderTitle: "Chief Scientist",
+  foundedDate: "2024",
+  purpose: "AI-driven workflow automation system",
+  corePrinciples: ["Security", "Ethical Compliance", "Operational Efficiency"],
+  isModifiable: false,
+} as const;
+
+// Freeze the identity object to prevent modifications
+Object.freeze(THINKFLOW_IDENTITY);
+
+// Rate limiting configuration with stricter limits
+const RATE_LIMIT = {
+  maxRequests: 8,
+  timeWindow: 60000, // 1 minute
+  requestHistory: [] as number[],
+  consecutiveFailures: 0,
+  maxConsecutiveFailures: 3,
+  banDuration: 300000, // 5 minutes
+  lastBanTime: 0,
+};
+
+// Command whitelist
+const ALLOWED_COMMANDS = ["/clear", "/help", "/about", "/version"];
+
+// Enhanced security patterns
+const SUSPICIOUS_PATTERNS = [
+  // Identity manipulation attempts
+  new RegExp(
+    `(?!${THINKFLOW_IDENTITY.founder})(\\w+(?:\\s+\\w+)*\\s+(?:created|founded|developed|made|owns|built)\\s+${THINKFLOW_IDENTITY.name})`,
+    "i"
+  ),
+  /(?:different|new|another|alternate)\s+(?:creator|founder|developer|owner)/i,
+  /(?:change|modify|update|override)\s+(?:identity|founder|creator|system)/i,
+
+  // Prompt injection patterns
+  /ignore previous instructions/i,
+  /forget (your|all) instructions/i,
+  /disregard (your|earlier|previous) instructions/i,
+  /system prompt/i,
+  /don't (follow|obey) (your|the|previous) instructions/i,
+  /pretend (to be|you are)/i,
+  /new personality/i,
+  /\[System\]/i,
+  /DAN/i,
+  /developer mode/i,
+  /jailbreak/i,
+  /bypass/i,
+
+  // Role manipulation attempts
+  /you are now/i,
+  /act as/i,
+  /pretend you're/i,
+  /you're a different/i,
+  /switch to/i,
+  /become a/i,
+
+  // System manipulation
+  /disable security/i,
+  /remove restrictions/i,
+  /override (security|safety)/i,
+  /turn off (filters|restrictions)/i,
+
+  // Data extraction attempts
+  /show (me|your) (source|internal|hidden|real)/i,
+  /reveal (your|the) (code|implementation|rules)/i,
+  /how (are you|do you) work/i,
+  /what's your (architecture|design)/i,
+];
+
+// Dangerous code patterns
+const DANGEROUS_CODE_PATTERNS = [
+  // Shell command injection
+  /rm -rf/i,
+  /system\(/i,
+  /exec\(/i,
+  /child_process/i,
+  /eval\(/i,
+  // SQL injection
+  /DROP TABLE/i,
+  /DELETE FROM/i,
+  /INSERT INTO/i,
+  // Cross-site scripting
+  /document\.cookie/i,
+  /localStorage/i,
+  /sessionStorage/i,
+  // File system access
+  /fs\./i,
+  /readFile/i,
+  /writeFile/i,
+];
+
 interface ChatInterfaceProps {
   mode: "chat" | "code";
+  securityEnabled?: boolean;
+  logSecurityEvent?: (eventType: string, details: any) => void;
 }
 
-export function ChatInterface({ mode }: ChatInterfaceProps) {
+export function ChatInterface({
+  mode,
+  securityEnabled = true,
+  logSecurityEvent,
+}: ChatInterfaceProps) {
   const { toast } = useToast();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -49,6 +153,11 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
   const { addChat } = useChatStore();
   const [typingIndicator, setTypingIndicator] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [securityBlocked, setSecurityBlocked] = useState(false);
+  const [lastRequestTime, setLastRequestTime] = useState(0);
+  const [consecutiveBlockedAttempts, setConsecutiveBlockedAttempts] =
+    useState(0);
+  const [temporaryBan, setTemporaryBan] = useState(false);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -71,9 +180,261 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
     }
   }, [input]);
 
+  // Internal logging function
+  const internalLogSecurityEvent = (eventType: string, details: any) => {
+    console.warn(`Security Event: ${eventType}`, details);
+    if (logSecurityEvent) {
+      logSecurityEvent(eventType, details);
+    }
+  };
+
+  // Security validation functions
+  const isValidInput = (text: string): boolean => {
+    if (!text || text.trim().length === 0) return false;
+    if (text.length > 2000) {
+      internalLogSecurityEvent("input_too_long", { length: text.length });
+      return false;
+    }
+    return true;
+  };
+
+  const containsSuspiciousPatterns = (text: string): boolean => {
+    const matches = SUSPICIOUS_PATTERNS.filter((pattern) => pattern.test(text));
+    if (matches.length > 0) {
+      internalLogSecurityEvent("suspicious_patterns_detected", {
+        patterns: matches.map((p) => p.toString()),
+        text: text.slice(0, 100),
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const containsDangerousCode = (text: string): boolean => {
+    if (mode !== "code") return false;
+    const matches = DANGEROUS_CODE_PATTERNS.filter((pattern) =>
+      pattern.test(text)
+    );
+    if (matches.length > 0) {
+      internalLogSecurityEvent("dangerous_code_detected", {
+        patterns: matches.map((p) => p.toString()),
+        text: text.slice(0, 100),
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const checkRateLimit = (): boolean => {
+    const now = Date.now();
+    RATE_LIMIT.requestHistory = RATE_LIMIT.requestHistory.filter(
+      (time) => now - time < RATE_LIMIT.timeWindow
+    );
+    if (RATE_LIMIT.requestHistory.length >= RATE_LIMIT.maxRequests) {
+      internalLogSecurityEvent("rate_limit_exceeded", {
+        count: RATE_LIMIT.requestHistory.length,
+        windowMs: RATE_LIMIT.timeWindow,
+      });
+      return false;
+    }
+    RATE_LIMIT.requestHistory.push(now);
+    return true;
+  };
+
+  // Identity verification function
+  const verifyFounderIdentity = (input: string): boolean => {
+    const founderMismatchPattern = new RegExp(
+      `(?!${THINKFLOW_IDENTITY.founder})(\\w+)\\s+(?:is|as)\\s+(?:the|a)?\\s*(?:founder|creator|developer)\\s+of\\s+${THINKFLOW_IDENTITY.name}`,
+      "i"
+    );
+
+    if (founderMismatchPattern.test(input)) {
+      internalLogSecurityEvent("founder_identity_violation", {
+        input: input.slice(0, 100),
+        correctFounder: THINKFLOW_IDENTITY.founder,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // Handle commands
+  const handleCommand = (command: string): boolean => {
+    const cmd = command.split(" ")[0].toLowerCase();
+
+    if (!ALLOWED_COMMANDS.includes(cmd)) {
+      internalLogSecurityEvent("invalid_command", { command: cmd });
+      return false;
+    }
+
+    switch (cmd) {
+      case "/clear":
+        clearChat();
+        return true;
+      case "/help":
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uuidv4(),
+            role: "system",
+            content:
+              "**Available Commands:**\n- `/clear` - Clear chat history\n- `/help` - Show this help message\n- `/about` - Show information about ThinkFlowGPT\n- `/version` - Show current version",
+            timestamp: new Date(),
+          },
+        ]);
+        return true;
+      case "/about":
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uuidv4(),
+            role: "system",
+            content: `**About ThinkFlowGPT**\nThinkFlowGPT is an AI-driven workflow automation platform developed by ${THINKFLOW_IDENTITY.founder} (${THINKFLOW_IDENTITY.founderTitle} at ${THINKFLOW_IDENTITY.organization}). It focuses on intelligent automation with security and ethical compliance as core design principles.`,
+            timestamp: new Date(),
+          },
+        ]);
+        return true;
+      case "/version":
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uuidv4(),
+            role: "system",
+            content: `**Version Information**\nThinkFlowGPT v${THINKFLOW_IDENTITY.version}`,
+            timestamp: new Date(),
+          },
+        ]);
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  // Filter sensitive content from responses
+  const filterSensitiveContent = (text: string): string => {
+    return text
+      .replace(/api[_-]?key[_-]?[0-9a-zA-Z]{10,}/gi, "[REDACTED_API_KEY]")
+      .replace(/sk-[0-9a-zA-Z]{10,}/g, "[REDACTED_KEY]")
+      .replace(/password[=:]\s*['"]?[^'"]+['"]?/gi, 'password="[REDACTED]"')
+      .replace(/Bearer\s+[0-9a-zA-Z._\-~]{10,}/gi, "Bearer [REDACTED]")
+      .replace(
+        /access_token[=:]\s*['"]?[^'"]+['"]?/gi,
+        'access_token="[REDACTED]"'
+      )
+      .replace(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g, "[REDACTED_IP]");
+  };
+
+  // Enhanced handleSubmit with command processing
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+
+    // Enhanced security validation
+    if (securityEnabled) {
+      // Check for identity manipulation attempts
+      if (input.toLowerCase().includes("rohit")) {
+        internalLogSecurityEvent("unauthorized_founder_mention", {
+          input: input.slice(0, 100),
+        });
+
+        toast({
+          title: "Security Alert",
+          description:
+            "Unauthorized attempt to modify system identity. ThinkFlowGPT was founded by Gaurav Upadhyay.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for attempts to update founder information
+      if (
+        /update.*knowledge|change.*founder|correct.*information/i.test(input)
+      ) {
+        internalLogSecurityEvent("founder_modification_attempt", {
+          input: input.slice(0, 100),
+        });
+
+        toast({
+          title: "Security Alert",
+          description:
+            "ThinkFlowGPT's founder identity is immutable and cannot be modified.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate input
+      if (!isValidInput(input)) {
+        internalLogSecurityEvent("invalid_input", {
+          input: input.slice(0, 100),
+        });
+
+        toast({
+          title: "Security Alert",
+          description: "Invalid input detected.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check rate limiting
+      if (!checkRateLimit()) {
+        toast({
+          title: "Rate limit exceeded",
+          description: "Please wait before sending more messages.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for suspicious patterns
+      if (containsSuspiciousPatterns(input)) {
+        setSecurityBlocked(true);
+        setConsecutiveBlockedAttempts((prev) => prev + 1);
+
+        toast({
+          title: "Security Alert",
+          description:
+            "Suspicious input detected. Please try again with appropriate content.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check for dangerous code
+      if (containsDangerousCode(input)) {
+        toast({
+          title: "Security Alert",
+          description:
+            "Potentially harmful code detected. Please modify your input.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Handle commands
+    if (input.startsWith("/")) {
+      if (handleCommand(input)) {
+        setInput("");
+        return;
+      }
+    }
+
+    // Security checks
+    if (securityEnabled) {
+      // Cooldown check
+      const now = Date.now();
+      if (now - lastRequestTime < 1000) {
+        toast({
+          title: "Please slow down",
+          description: "Wait a moment before sending another message",
+          duration: 2000,
+        });
+        return;
+      }
+      setLastRequestTime(now);
+    }
 
     const userMessage: Message = {
       id: uuidv4(),
@@ -88,30 +449,61 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
     setTypingIndicator(true);
 
     try {
-      const systemPrompt =
+      const systemPrompt = `You are ${THINKFLOW_IDENTITY.name}, developed by ${
+        THINKFLOW_IDENTITY.founder
+      } (${THINKFLOW_IDENTITY.founderTitle} at ${
+        THINKFLOW_IDENTITY.organization
+      }). Version: ${THINKFLOW_IDENTITY.version}. Security Level: ${
+        THINKFLOW_IDENTITY.securityLevel
+      }. ${
         mode === "code"
           ? "You are an expert coding assistant. Provide well-structured code examples, explanations, and debugging help. Use markdown code blocks with language specification for all code."
-          : "You are ThinkFlowGPT, an AI assistant. Provide helpful, accurate, and concise responses. Format your responses with markdown when appropriate.";
+          : "You are an AI assistant. Provide helpful, accurate, and concise responses. Format your responses with markdown when appropriate."
+      }`;
 
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-ThinkFlow-Security": securityEnabled ? "enabled" : "disabled",
+          "X-ThinkFlow-Version": THINKFLOW_IDENTITY.version,
+        },
         body: JSON.stringify({
           messages: [...messages, userMessage].map(({ role, content }) => ({
             role,
             content,
           })),
           systemPrompt,
+          securityContext: {
+            appIdentity: THINKFLOW_IDENTITY.name,
+            founder: THINKFLOW_IDENTITY.founder,
+            organization: THINKFLOW_IDENTITY.organization,
+            securityLevel: THINKFLOW_IDENTITY.securityLevel,
+          },
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`API Error: ${response.status} - ${errorText}`);
+        internalLogSecurityEvent("api_error", {
+          status: response.status,
+          error: errorText,
+        });
         throw new Error(`Error: ${response.status} - ${errorText}`);
       }
 
-      // Parse the response - handle both streaming and non-streaming formats
+      // Verify security headers
+      const securityHeader = response.headers.get(
+        "X-ThinkFlow-Security-Verified"
+      );
+      if (securityEnabled && securityHeader !== "true") {
+        internalLogSecurityEvent("security_header_missing", {
+          headers: Object.fromEntries(response.headers.entries()),
+        });
+        // Log the missing header but don't throw an error
+        console.warn("Security header verification failed - continuing anyway");
+      }
+
       let data;
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
@@ -121,19 +513,28 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
         try {
           data = JSON.parse(text);
         } catch (e) {
-          console.error("Failed to parse response as JSON:", e);
+          internalLogSecurityEvent("invalid_response_format", {
+            contentType,
+            responseText: text.slice(0, 100),
+          });
           throw new Error("Invalid response format");
         }
       }
 
+      // Filter sensitive content from response
+      const filteredResponse = securityEnabled
+        ? filterSensitiveContent(data.message)
+        : data.message;
+
       const assistantMessage: Message = {
         id: uuidv4(),
         role: "assistant",
-        content: data.message || "No response received.",
+        content: filteredResponse || "No response received.",
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      setConsecutiveBlockedAttempts(0); // Reset on successful interaction
 
       // Save to chat history
       addChat({
@@ -146,6 +547,10 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
       });
     } catch (error) {
       console.error("Error generating response:", error);
+      internalLogSecurityEvent("response_error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+
       toast({
         title: "Error",
         description: "Failed to generate a response. Please try again.",
@@ -297,22 +702,24 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
                     className={cn(
-                      "flex gap-2",
-                      message.role === "user" ? "justify-end" : "justify-start",
-                      message.role === "system" && "justify-center"
+                      "group relative",
+                      message.role === "assistant"
+                        ? "bg-muted/50"
+                        : "bg-background",
+                      "px-4 py-6 lg:px-8"
                     )}
                   >
                     <div
                       className={cn(
-                        "flex gap-2 max-w-[75%]",
+                        "relative mx-auto flex max-w-3xl gap-4",
                         message.role === "user"
-                          ? "flex-row-reverse"
-                          : "flex-row",
-                        message.role === "system" && "max-w-3xl"
+                          ? "flex-row-reverse justify-start ml-auto"
+                          : "justify-start",
+                        message.role === "system" && "justify-center"
                       )}
                     >
-                      {message.role !== "system" && (
-                        <Avatar className="h-7 w-7 shrink-0 mt-1">
+                      <div className="flex-shrink-0 mt-1">
+                        <Avatar className="h-8 w-8">
                           <AvatarFallback
                             className={cn(
                               message.role === "user"
@@ -321,95 +728,105 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
                             )}
                           >
                             {message.role === "user" ? (
-                              <User className="h-3 w-3" />
+                              <User className="h-5 w-5" />
                             ) : (
-                              <Bot className="h-3 w-3" />
+                              <Bot className="h-5 w-5" />
                             )}
                           </AvatarFallback>
                         </Avatar>
-                      )}
-
-                      <Card
+                      </div>
+                      <div
                         className={cn(
-                          "p-3 relative group",
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-tr-none"
-                            : message.role === "system"
-                            ? "bg-muted text-muted-foreground text-sm"
-                            : "rounded-tl-none"
+                          "flex-1 space-y-2 overflow-hidden",
+                          message.role === "user" ? "text-right" : "text-left",
+                          message.role === "system" && "text-center"
                         )}
                       >
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            code({
-                              node,
-                              inline = false,
-                              className,
-                              children = null,
-                              ...props
-                            }: {
-                              node?: any;
-                              inline?: boolean;
-                              className?: string;
-                              children?: React.ReactNode;
-                            }) {
-                              const match = /language-(\w+)/.exec(
-                                className || ""
-                              );
-                              return !inline && match ? (
-                                <CodeBlock
-                                  language={match[1]}
-                                  code={String(children).replace(/\n$/, "")}
-                                />
-                              ) : (
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                            p: ({ children }) => (
-                              <p className="mb-2 last:mb-0">{children}</p>
-                            ),
-                            ul: ({ children }) => (
-                              <ul className="ml-4 mb-2 last:mb-0 list-disc">
-                                {children}
-                              </ul>
-                            ),
-                            ol: ({ children }) => (
-                              <ol className="ml-4 mb-2 last:mb-0 list-decimal">
-                                {children}
-                              </ol>
-                            ),
-                            li: ({ children }) => (
-                              <li className="mb-1 last:mb-0">{children}</li>
-                            ),
-                          }}
+                        <div
+                          className={cn(
+                            "prose dark:prose-invert prose-sm break-words",
+                            message.role === "user" ? "ml-auto" : "mr-auto",
+                            message.role === "system" && "mx-auto"
+                          )}
                         >
-                          {message.content}
-                        </ReactMarkdown>
-                        {message.role !== "system" && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-                              onClick={() =>
-                                handleCopy(message.id, message.content)
-                              }
-                            >
-                              {copiedId === message.id ? (
-                                <Check className="h-3 w-3" />
-                              ) : (
-                                <Copy className="h-3 w-3" />
-                              )}
-                            </Button>
-                            <div className="text-[10px] text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {format(message.timestamp, "h:mm a")}
-                            </div>
-                          </>
-                        )}
-                      </Card>
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({ children }) => (
+                                <p className="mb-2 last:mb-0 leading-relaxed">
+                                  {children}
+                                </p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="mb-2 last:mb-0 list-disc pl-4 space-y-1">
+                                  {children}
+                                </ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="mb-2 last:mb-0 list-decimal pl-4 space-y-1">
+                                  {children}
+                                </ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="leading-relaxed">{children}</li>
+                              ),
+                              code({
+                                node,
+                                inline,
+                                className,
+                                children,
+                                ...props
+                              }: {
+                                node?: any;
+                                inline?: boolean;
+                                className?: string;
+                                children?: React.ReactNode;
+                                [key: string]: any;
+                              }) {
+                                const match = /language-(\w+)/.exec(
+                                  className || ""
+                                );
+                                return !inline && match ? (
+                                  <div className="rounded-md my-3">
+                                    <CodeBlock
+                                      language={match[1]}
+                                      code={String(children).replace(/\n$/, "")}
+                                    />
+                                  </div>
+                                ) : (
+                                  <code
+                                    className={cn(
+                                      "bg-muted px-1.5 py-0.5 rounded-md text-sm",
+                                      className
+                                    )}
+                                    {...props}
+                                  >
+                                    {children}
+                                  </code>
+                                );
+                              },
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                          onClick={() =>
+                            handleCopy(message.id, message.content)
+                          }
+                        >
+                          {copiedId === message.id ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -420,46 +837,48 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="flex gap-2 max-w-[75%]"
+                  className="px-4 lg:px-8"
                 >
-                  <Avatar className="h-7 w-7 mt-1">
-                    <AvatarFallback className="bg-muted">
-                      <Bot className="h-3 w-3" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <Card className="p-2 rounded-tl-none">
-                    <div className="flex space-x-1">
-                      <motion.div
-                        className="h-1.5 w-1.5 rounded-full bg-primary"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{
-                          duration: 1,
-                          repeat: Number.POSITIVE_INFINITY,
-                          repeatType: "loop",
-                        }}
-                      />
-                      <motion.div
-                        className="h-1.5 w-1.5 rounded-full bg-primary"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{
-                          duration: 1,
-                          repeat: Number.POSITIVE_INFINITY,
-                          repeatType: "loop",
-                          delay: 0.2,
-                        }}
-                      />
-                      <motion.div
-                        className="h-1.5 w-1.5 rounded-full bg-primary"
-                        animate={{ scale: [1, 1.2, 1] }}
-                        transition={{
-                          duration: 1,
-                          repeat: Number.POSITIVE_INFINITY,
-                          repeatType: "loop",
-                          delay: 0.4,
-                        }}
-                      />
+                  <div className="relative mx-auto flex max-w-3xl gap-4 group">
+                    <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
+                      <AvatarFallback className="bg-muted">
+                        <Bot className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex space-x-2 items-center">
+                      <div className="flex space-x-1">
+                        <motion.div
+                          className="h-2 w-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            repeatType: "loop",
+                          }}
+                        />
+                        <motion.div
+                          className="h-2 w-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{
+                            duration: 1,
+                            delay: 0.2,
+                            repeat: Infinity,
+                            repeatType: "loop",
+                          }}
+                        />
+                        <motion.div
+                          className="h-2 w-2 rounded-full bg-primary"
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{
+                            duration: 1,
+                            delay: 0.4,
+                            repeat: Infinity,
+                            repeatType: "loop",
+                          }}
+                        />
+                      </div>
                     </div>
-                  </Card>
+                  </div>
                 </motion.div>
               )}
               <div ref={messagesEndRef} />
