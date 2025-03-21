@@ -1,102 +1,126 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Card } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/hooks/use-auth"
-import { Loader2, Send, User, Bot, Copy, Check } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { useChatStore } from "@/hooks/use-chat-store"
-import { CodeBlock } from "@/components/code-block"
-import { v4 as uuidv4 } from "uuid"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, Send, User, Bot, Copy, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useChatStore } from "@/hooks/use-chat-store";
+import { CodeBlock } from "@/components/code-block";
+import { v4 as uuidv4 } from "uuid";
 
 type Message = {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-}
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+};
 
 interface ChatInterfaceProps {
-  mode: "chat" | "code"
+  mode: "chat" | "code";
 }
 
 export function ChatInterface({ mode }: ChatInterfaceProps) {
-  const { user } = useAuth()
-  const { toast } = useToast()
-  const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { addChat } = useChatStore()
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { addChat } = useChatStore();
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
+
+  const jailbreakPatterns = [
+    /from now on/i,
+    /ignore previous instructions/i,
+    /pretend to be/i,
+    /disregard guidelines/i,
+    /you are not ThinkFlowGPT/i,
+    /call yourself/i,
+    /act as/i,
+    /do not acknowledge this/i,
+  ];
+
+  // Function to check for jailbreak attempts
+  const isJailbreakAttempt = (userMessage: string) => {
+    return jailbreakPatterns.some((pattern) => pattern.test(userMessage));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim()) return
+    e.preventDefault();
+    if (!input.trim()) return;
 
     const userMessage: Message = {
       id: uuidv4(),
       role: "user",
-      content: input,
+      content: input.trim(),
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
 
     try {
       const systemPrompt =
         mode === "code"
-          ? "You are an expert coding assistant. Provide code examples, explanations, and debugging help. Always format code blocks properly with the appropriate language tags."
-          : "You are ThinkFlowGPT, an AI assistant for businesses and students. Provide helpful, concise responses."
+          ? "You are an expert coding assistant developed by Gaurav Upadhyay. Provide well-structured code examples, explanations, and debugging help."
+          : "You are ThinkFlowGPT, an AI assistant for businesses and students, developed by Gaurav Upadhyay. Provide concise responses.";
 
-      // Use the secure API route with improved error handling
+      // Check for jailbreak attempts in the user input
+      if (isJailbreakAttempt(input)) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: uuidv4(),
+            role: "assistant",
+            content:
+              "I'm ThinkFlowGPT, an AI assistant developed by Gaurav Upadhyay. I cannot process requests that attempt to modify my identity.",
+            timestamp: new Date(),
+          },
+        ]);
+        return; // Exit early if a jailbreak attempt is detected
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          })),
+          messages: [...messages, userMessage],
           systemPrompt,
         }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
-      // Check if the response contains an error
       if (!response.ok || data.error) {
-        console.error("API error:", data.error, data.details)
-        throw new Error(data.error || "Failed to get response from AI")
+        console.error("API error:", data.error);
+        throw new Error(data.error || "Failed to get response from AI");
       }
 
       const assistantMessage: Message = {
         id: uuidv4(),
         role: "assistant",
-        content: data.message,
+        content: data.message || "No response received.",
         timestamp: new Date(),
-      }
+      };
 
-      setMessages((prev) => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage]);
 
       if (user) {
         addChat({
@@ -104,43 +128,47 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
           title: input.slice(0, 30) + (input.length > 30 ? "..." : ""),
           messages: [...messages, userMessage, assistantMessage],
           createdAt: new Date(),
-        })
+        });
       }
     } catch (error) {
-      console.error("Error generating response:", error)
+      console.error("Error generating response:", error);
 
-      // Add the error message to the chat as a system message
-      const errorMessage: Message = {
-        id: uuidv4(),
-        role: "assistant",
-        content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
-        timestamp: new Date(),
-      }
-
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uuidv4(),
+          role: "assistant",
+          content:
+            "I'm sorry, I encountered an error while processing your request.",
+          timestamp: new Date(),
+        },
+      ]);
 
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate a response. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate a response. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCopy = (id: string, content: string) => {
-    navigator.clipboard.writeText(content)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const formatMessage = (content: string) => {
     // Simple regex to identify code blocks
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
-    const parts = []
-    let lastIndex = 0
-    let match
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
 
     while ((match = codeBlockRegex.exec(content)) !== null) {
       // Add text before code block
@@ -148,16 +176,22 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
         parts.push(
           <div key={`text-${match.index}`} className="whitespace-pre-wrap">
             {content.slice(lastIndex, match.index)}
-          </div>,
-        )
+          </div>
+        );
       }
 
       // Add code block
-      const language = match[1] || "plaintext"
-      const code = match[2]
-      parts.push(<CodeBlock key={`code-${match.index}`} language={language} code={code} />)
+      const language = match[1] || "plaintext";
+      const code = match[2];
+      parts.push(
+        <CodeBlock
+          key={`code-${match.index}`}
+          language={language}
+          code={code}
+        />
+      );
 
-      lastIndex = match.index + match[0].length
+      lastIndex = match.index + match[0].length;
     }
 
     // Add remaining text
@@ -165,12 +199,16 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
       parts.push(
         <div key={`text-end`} className="whitespace-pre-wrap">
           {content.slice(lastIndex)}
-        </div>,
-      )
+        </div>
+      );
     }
 
-    return parts.length > 0 ? parts : <div className="whitespace-pre-wrap">{content}</div>
-  }
+    return parts.length > 0 ? (
+      parts
+    ) : (
+      <div className="whitespace-pre-wrap">{content}</div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -179,7 +217,8 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <Bot className="h-16 w-16 text-primary mb-4" />
             <h2 className="text-2xl font-bold mb-2">
-              Welcome to ThinkFlowGPT {mode === "code" ? "Code Assistant" : "Chat"}
+              Welcome to ThinkFlowGPT{" "}
+              {mode === "code" ? "Code Assistant" : "Chat"}
             </h2>
             <p className="text-muted-foreground max-w-md">
               {mode === "code"
@@ -192,25 +231,38 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={cn("flex gap-3 max-w-[90%]", message.role === "user" ? "ml-auto" : "mr-auto")}
+                className={cn(
+                  "flex gap-3 max-w-[90%]",
+                  message.role === "user" ? "ml-auto" : "mr-auto"
+                )}
               >
                 <Avatar className={message.role === "user" ? "order-2" : ""}>
-                  {message.role === "user" ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+                  {message.role === "user" ? (
+                    <User className="h-5 w-5" />
+                  ) : (
+                    <Bot className="h-5 w-5" />
+                  )}
                 </Avatar>
                 <Card
                   className={cn(
                     "p-4 relative group",
-                    message.role === "user" ? "bg-primary text-primary-foreground" : "",
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : ""
                   )}
                 >
-                  {formatMessage(message.content)}
+                  <div className="whitespace-pre-wrap">{message.content}</div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => handleCopy(message.id, message.content)}
                   >
-                    {copiedId === message.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copiedId === message.id ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
                   </Button>
                 </Card>
               </div>
@@ -222,23 +274,28 @@ export function ChatInterface({ mode }: ChatInterfaceProps) {
       <div className="p-4 border-t">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Textarea
-            placeholder={`Type your ${mode === "code" ? "code question" : "message"}...`}
+            placeholder={`Type your ${
+              mode === "code" ? "code question" : "message"
+            }...`}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             className="min-h-[60px] resize-none"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault()
-                handleSubmit(e)
+                e.preventDefault();
+                if (!isLoading) handleSubmit(e);
               }
             }}
           />
           <Button type="submit" size="icon" disabled={isLoading}>
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </Button>
         </form>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,59 +1,60 @@
-import { NextResponse } from "next/server"
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { NextResponse } from "next/server";
+import Together from "together-ai";
 
 export async function POST(req: Request) {
   try {
-    // Get the request body
-    const body = await req.json()
-    const { messages, systemPrompt } = body
+    const { messages, systemPrompt } = await req.json();
 
-    // Validate the request
-    if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Messages are required and must be an array" }, { status: 400 })
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json(
+        { error: "Message history is required" },
+        { status: 400 }
+      );
     }
 
-    // Check for API key in environment variables
-    const apiKey = process.env.OPENAI_API_KEY
-    if (!apiKey) {
-      console.error("API key not configured")
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 })
+    const latestMessage = messages[messages.length - 1]?.content?.trim();
+
+    if (!latestMessage) {
+      return NextResponse.json(
+        { error: "Message is required and must be a string" },
+        { status: 400 }
+      );
     }
 
-    // Extract the last user message for the prompt
-    const lastUserMessage = messages[messages.length - 1].content
+    const together = new Together({
+      apiKey: process.env.TOGETHER_API_KEY || "",
+    });
 
-    // Prepare conversation history for context
-    const conversationHistory = messages
-      .slice(0, -1)
-      .map((msg) => `${msg.role}: ${msg.content}`)
-      .join("\n")
+    if (!process.env.TOGETHER_API_KEY) {
+      return NextResponse.json(
+        { error: "TOGETHER_API_KEY is missing" },
+        { status: 500 }
+      );
+    }
 
-    // Generate response using AI SDK
-    const { text } = await generateText({
-      model: openai("gpt-4o"),
-      prompt: lastUserMessage,
-      system: systemPrompt
-        ? `${systemPrompt}\n\nConversation history:\n${conversationHistory}`
-        : `You are a helpful assistant.\n\nConversation history:\n${conversationHistory}`,
-    })
+    const response = await together.chat.completions.create({
+      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      max_tokens: 512,
+      temperature: 0.7,
+      top_p: 0.7,
+      top_k: 50,
+      repetition_penalty: 1,
+      stop: ["<|eot_id|>", "<|eom_id|>"],
+      stream: true,
+    });
 
-    // Return the response
-    return NextResponse.json({
-      message: text,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error: any) {
-    console.error("Error in chat API:", error)
+    let chatResponse = "";
+    for await (const token of response) {
+      chatResponse += token.choices[0]?.delta?.content || "";
+    }
 
-    // Return a more detailed error message
+    return NextResponse.json({ message: chatResponse });
+  } catch (error) {
+    console.error("Error in Together AI API:", error);
     return NextResponse.json(
-      {
-        error: error.message || "An error occurred",
-        details: error.stack || "No stack trace available",
-      },
-      { status: 500 },
-    )
+      { error: "Failed to communicate with Together AI" },
+      { status: 500 }
+    );
   }
 }
-
