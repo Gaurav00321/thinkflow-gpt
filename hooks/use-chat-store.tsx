@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware"
 
 type Message = {
   id: string
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "system"
   content: string
   timestamp: Date
 }
@@ -17,9 +17,10 @@ type Chat = {
   createdAt: Date
 }
 
-type ChatStore = {
+interface ChatStore {
   chats: Chat[]
   addChat: (chat: Chat) => void
+  updateChat: (id: string, chat: Partial<Chat>) => void
   removeChat: (id: string) => void
   clearChats: () => void
 }
@@ -30,7 +31,11 @@ export const useChatStore = create<ChatStore>()(
       chats: [],
       addChat: (chat) =>
         set((state) => ({
-          chats: [chat, ...state.chats],
+          chats: [chat, ...state.chats].slice(0, 50), // Limit to 50 chats
+        })),
+      updateChat: (id, updatedChat) =>
+        set((state) => ({
+          chats: state.chats.map((chat) => (chat.id === id ? { ...chat, ...updatedChat } : chat)),
         })),
       removeChat: (id) =>
         set((state) => ({
@@ -39,7 +44,7 @@ export const useChatStore = create<ChatStore>()(
       clearChats: () => set({ chats: [] }),
     }),
     {
-      name: "thinkflow-chats",
+      name: "chat-store",
     },
   ),
 )
