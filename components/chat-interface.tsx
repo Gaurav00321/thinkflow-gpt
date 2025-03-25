@@ -18,6 +18,9 @@ import {
   Check,
   RefreshCw,
   Trash,
+  Pencil,
+  ImageIcon,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/hooks/use-chat-store";
@@ -149,6 +152,7 @@ export function ChatInterface({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addChat } = useChatStore();
   const [typingIndicator, setTypingIndicator] = useState(false);
@@ -158,6 +162,57 @@ export function ChatInterface({
   const [consecutiveBlockedAttempts, setConsecutiveBlockedAttempts] =
     useState(0);
   const [temporaryBan, setTemporaryBan] = useState(false);
+  const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+
+  const generalSuggestions = [
+    "Tell me about workflow automation...",
+    "How can I improve my productivity?",
+    "What are some best practices for project management?",
+    "Help me organize my tasks better",
+    "Explain machine learning concepts",
+    "Give me tips for better time management",
+    "How to lead a successful team?",
+    "Suggest ways to optimize business processes",
+  ];
+
+  const codeSuggestions = [
+    "Help me debug this Python function...",
+    "Explain React hooks and their usage",
+    "How to implement authentication in Node.js?",
+    "Write a sorting algorithm in Java",
+    "Create a REST API endpoint example",
+    "Show me TypeScript best practices",
+    "Help with database optimization",
+    "Example of error handling in Go",
+  ];
+
+  const suggestions = mode === "code" ? codeSuggestions : generalSuggestions;
+
+  // Cycle through suggestions
+  useEffect(() => {
+    if (!isTyping && !input) {
+      const interval = setInterval(() => {
+        setCurrentSuggestionIndex((prev) => (prev + 1) % suggestions.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [isTyping, input, suggestions.length]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    setIsTyping(true);
+  };
+
+  const handleInputFocus = () => {
+    setIsTyping(true);
+  };
+
+  const handleInputBlur = () => {
+    if (!input) {
+      setIsTyping(false);
+    }
+  };
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -651,6 +706,18 @@ export function ChatInterface({
     }
   };
 
+  const handleEditMessage = (messageId: string) => {
+    const message = messages.find((m) => m.id === messageId);
+    if (message) {
+      setInput(message.content);
+      setEditingMessageId(messageId);
+      setMessages(messages.filter((m) => m.id !== messageId));
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col h-full w-full">
       <ScrollArea className="flex-1 p-4 w-full">
@@ -810,22 +877,56 @@ export function ChatInterface({
                             {message.content}
                           </ReactMarkdown>
                         </div>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                          onClick={() =>
-                            handleCopy(message.id, message.content)
-                          }
-                        >
-                          {copiedId === message.id ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
+                        <div
+                          className={cn(
+                            "flex items-center gap-2",
+                            message.role === "user"
+                              ? "justify-end"
+                              : "justify-start",
+                            "opacity-0 group-hover:opacity-100 transition-opacity"
                           )}
-                        </Button>
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 sm:h-8 sm:w-8"
+                            onClick={() =>
+                              handleCopy(message.id, message.content)
+                            }
+                          >
+                            {copiedId === message.id ? (
+                              <Check className="h-3 w-3 sm:h-4 sm:w-4" />
+                            ) : (
+                              <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+                            )}
+                          </Button>
+                          {message.role === "user" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 sm:h-8 sm:w-8"
+                              onClick={() => handleEditMessage(message.id)}
+                            >
+                              <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          )}
+                          {message.role === "assistant" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 sm:h-8 sm:w-8"
+                              onClick={regenerateResponse}
+                              disabled={isLoading}
+                            >
+                              <RefreshCw
+                                className={cn(
+                                  "h-3 w-3 sm:h-4 sm:w-4",
+                                  isLoading && "animate-spin"
+                                )}
+                              />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -887,66 +988,93 @@ export function ChatInterface({
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t w-full">
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="flex justify-center space-x-2 mb-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearChat}
-              disabled={messages.length === 0 || isLoading}
-            >
-              <Trash className="h-4 w-4 mr-2" />
-              Clear Chat
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={regenerateResponse}
-              disabled={
-                messages.length < 2 ||
-                isLoading ||
-                messages[messages.length - 1].role === "user"
-              }
-            >
-              <RefreshCw
-                className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")}
+      <div className="pb-4 pt-2 bg-gradient-to-t from-background to-transparent backdrop-blur-sm">
+        <div className="max-w-3xl mx-auto w-full">
+          <form
+            onSubmit={handleSubmit}
+            className="relative flex flex-col gap-2"
+          >
+            <div className="relative flex-1">
+              <Textarea
+                ref={textareaRef}
+                placeholder=" "
+                value={input}
+                onChange={handleInputChange}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
+                className="min-h-[80px] max-h-[300px] resize-none px-4 py-4 rounded-xl border-muted-foreground/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm hover:shadow-md transition-shadow"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isLoading) handleSubmit(e);
+                  }
+                }}
               />
-              Regenerate
-            </Button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <Textarea
-              ref={textareaRef}
-              placeholder={`Type your ${
-                mode === "code" ? "code question" : "message"
-              }...`}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="min-h-[60px] resize-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  if (!isLoading) handleSubmit(e);
-                }
-              }}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={isLoading || !input.trim()}
-              className={cn(
-                "transition-all duration-200",
-                isLoading ? "bg-muted" : "bg-primary"
+              {!isTyping && !input && (
+                <motion.div
+                  key={currentSuggestionIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 0.5, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="absolute left-4 top-4 pointer-events-none text-muted-foreground text-sm sm:text-base line-clamp-1 pr-12"
+                >
+                  {suggestions[currentSuggestionIndex]}
+                </motion.div>
               )}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
+              <div className="absolute left-3 bottom-3 flex items-center gap-2 z-10">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg hover:bg-accent"
+                  onClick={() => {
+                    toast({
+                      title: "Coming Soon",
+                      description:
+                        "Image upload feature will be available soon!",
+                    });
+                  }}
+                >
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-lg hover:bg-accent"
+                  onClick={() => {
+                    toast({
+                      title: "Coming Soon",
+                      description:
+                        "AI suggestions feature will be available soon!",
+                    });
+                  }}
+                >
+                  <Wand2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={isLoading || !input.trim()}
+                className={cn(
+                  "absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg transition-all duration-200",
+                  isLoading ? "bg-muted" : "bg-primary hover:bg-primary/90"
+                )}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="text-xs text-muted-foreground text-center">
+                ThinkFlowGPT may produce inaccurate information
+              </div>
+            </div>
           </form>
         </div>
       </div>

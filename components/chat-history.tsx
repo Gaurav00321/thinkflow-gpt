@@ -21,6 +21,7 @@ import {
 export function ChatHistory() {
   const { chats, removeChat, clearChats } = useChatStore();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [hoveredChatId, setHoveredChatId] = useState<string | null>(null);
 
   if (chats.length === 0) {
     return (
@@ -46,9 +47,11 @@ export function ChatHistory() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="group"
+                className="relative group"
+                onMouseEnter={() => setHoveredChatId(chat.id)}
+                onMouseLeave={() => setHoveredChatId(null)}
               >
-                <div className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent group-hover:bg-accent transition-colors">
+                <div className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-accent transition-colors group">
                   <div className="flex-1 truncate">
                     <div className="font-medium truncate">{chat.title}</div>
                     <div className="text-xs text-muted-foreground">
@@ -60,7 +63,7 @@ export function ChatHistory() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-7 w-7 hidden group-hover:inline-flex hover:bg-destructive hover:text-destructive-foreground items-center justify-center transition-all duration-200"
                     onClick={() => removeChat(chat.id)}
                   >
                     <Trash2 className="h-4 w-4" />
