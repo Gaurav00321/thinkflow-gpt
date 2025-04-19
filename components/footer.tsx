@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FaTwitter, FaGithub, FaLinkedin, FaInstagram } from "react-icons/fa";
 
 export function Footer() {
   return (
@@ -99,12 +100,57 @@ export function Footer() {
           </ul>
         </div>
       </div>
+
+      {/* Social icons */}
+      <div className="container mt-8 flex justify-center space-x-6">
+        <a
+          href="https://x.com/ThinkFlowGPT"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground transform transition-transform duration-300 hover:-translate-y-1"
+        >
+          <FaTwitter size={20} />
+        </a>
+        <a
+          href="https://github.com/ThinkFlowGPT"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground transform transition-transform duration-300 hover:-translate-y-1"
+        >
+          <FaGithub size={20} />
+        </a>
+        <a
+          href="https://www.linkedin.com/company/thinkflowgpt"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground transform transition-transform duration-300 hover:-translate-y-1"
+        >
+          <FaLinkedin size={20} />
+        </a>
+        <a
+          href="https://www.instagram.com/thinkflowgpt"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-muted-foreground hover:text-foreground transform transition-transform duration-300 hover:-translate-y-1"
+        >
+          <FaInstagram size={20} />
+        </a>
+      </div>
+
+      {/* Copyright */}
       <div className="container mt-8 border-t pt-8">
         <p className="text-center text-sm text-muted-foreground py-2">
           © {new Date().getFullYear()} ThinkFlowGPT. All rights reserved.
         </p>
         <p className="text-center text-sm text-muted-foreground">
-          Developed by <a href="gauravupadhyay.vercel.app">Gaurav Upadhyay</a>
+          Developed by{" "}
+          <a
+            href="https://gauravupadhyay.vercel.app"
+            className="underline hover:text-foreground"
+            target="_blank"
+          >
+            Gaurav Upadhyay
+          </a>
         </p>
       </div>
     </footer>

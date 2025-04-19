@@ -5,14 +5,32 @@ import { Footer } from "@/components/footer";
 import { BlogCard } from "@/components/blog-card";
 
 export const metadata: Metadata = {
-  title: "Blog - ThinkFlowGPT",
+  title: "Blog | Insights & Updates from ThinkFlowGPT",
   description:
-    "Read the latest articles, tutorials, and insights about AI, productivity, and workflow optimization.",
+    "Explore the latest insights, AI tutorials, productivity tips, and success stories from ThinkFlowGPT — the AI-powered assistant founded by Gaurav Upadhyay.",
+  keywords: [
+    "AI blog",
+    "ThinkFlowGPT updates",
+    "workflow automation",
+    "AI productivity",
+    "Gaurav Upadhyay",
+    "AI case studies",
+    "AI tutorials",
+    "ethical AI",
+  ],
   openGraph: {
-    title: "Blog - ThinkFlowGPT",
+    title: "ThinkFlowGPT Blog | AI News, Productivity & Automation",
     description:
-      "Read the latest articles, tutorials, and insights about AI, productivity, and workflow optimization.",
+      "Stay informed with the latest from ThinkFlowGPT — AI-powered insights, ethical practices, and smart automation by Gaurav Upadhyay.",
     type: "website",
+    url: "https://thinkflowgpt.vercel.app/blog",
+    siteName: "ThinkFlowGPT",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ThinkFlowGPT Blog",
+    description:
+      "Smart insights into AI automation, productivity, and success stories by ThinkFlowGPT, founded by Gaurav Upadhyay.",
   },
 };
 
@@ -26,8 +44,14 @@ export default function BlogPage() {
             <h1 className="text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">
               Our Blog
             </h1>
-            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-              Insights, tutorials, and updates from the ThinkFlowGPT team
+            <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7 mt-4">
+              <strong>ThinkFlowGPT</strong> is an AI-powered workflow assistant
+              designed to help businesses and students automate their daily
+              tasks and boost productivity. Founded by{" "}
+              <strong>Gaurav Upadhyay</strong>, ThinkFlowGPT is on a mission to
+              bring intelligent, ethical, and user-friendly automation to
+              everyone. Stay updated with our latest articles, success stories,
+              and innovations.
             </p>
           </div>
         </section>
