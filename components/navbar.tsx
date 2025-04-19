@@ -1,30 +1,35 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useAuth } from "@/hooks/use-auth"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Menu, X, User, Settings, LogOut, CreditCard, Key } from "lucide-react"
-import { useState } from "react"
+} from "@/components/ui/dropdown-menu";
+import { Menu, X, User, Settings, LogOut, CreditCard, Key } from "lucide-react";
+import { useState } from "react";
 
 export function Navbar() {
-  const pathname = usePathname()
-  const { user, signIn, signOut } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const pathname = usePathname();
+  const { user, signIn, signOut } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const routes = [
     {
       href: "/",
       label: "Home",
       active: pathname === "/",
+    },
+    {
+      href: "/blog",
+      label: "Blog",
+      active: pathname === "/blog" || pathname.startsWith("/blog/"),
     },
     {
       href: "/chat",
@@ -46,14 +51,16 @@ export function Navbar() {
       label: "API",
       active: pathname === "/api",
     },
-  ]
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="hidden items-center space-x-2 md:flex">
-            <span className="hidden font-bold sm:inline-block text-xl">ThinkFlowGPT</span>
+            <span className="hidden font-bold sm:inline-block text-xl">
+              ThinkFlowGPT
+            </span>
           </Link>
           <nav className="hidden gap-6 md:flex">
             {routes.map((route) => (
@@ -68,8 +75,15 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
-          <button className="flex items-center space-x-2 md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          <button
+            className="flex items-center space-x-2 md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
             <span className="font-bold text-xl">ThinkFlowGPT</span>
           </button>
         </div>
@@ -135,6 +149,5 @@ export function Navbar() {
         </div>
       )}
     </header>
-  )
+  );
 }
-
