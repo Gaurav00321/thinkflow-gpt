@@ -53,6 +53,7 @@ export const metadata: Metadata = {
       },
     ],
   },
+
   twitter: {
     card: "summary_large_image",
     title: "ThinkFlowGPT - AI Workflow Assistant by Gaurav Upadhyay",
@@ -61,6 +62,9 @@ export const metadata: Metadata = {
     site: "@ThinkFlowGPT", // Replace if you have a valid handle
     creator: "@gauravXupadhyay", // Replace if you have a valid handle
     images: ["https://thinkflowgpt.vercel.app/og-image.png"],
+  },
+  verification: {
+    google: "uL1VxfRJlaPS7zOBj-dskIjBcmwnv_a6zLqwTFRPWWM",
   },
 };
 
