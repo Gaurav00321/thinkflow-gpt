@@ -99,6 +99,7 @@ export function Footer() {
             </li>
           </ul>
         </div>
+        
       </div>
 
       {/* Social icons */}

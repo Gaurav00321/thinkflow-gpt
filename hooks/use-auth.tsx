@@ -1,100 +1,48 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { createContext, useContext, useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { createContext, useContext, useState } from "react";
 
 type User = {
-  id: string
-  name: string
-  email: string
-  image?: string
-}
+  id: string;
+  name?: string;
+  email?: string;
+} | null;
 
 type AuthContextType = {
-  user: User | null
-  signIn: () => Promise<void>
-  signOut: () => Promise<void>
-  isLoading: boolean
-}
+  user: User;
+  signIn: () => void;
+  signOut: () => void;
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  signIn: () => {},
+  signOut: () => {},
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
+  const [user, setUser] = useState<User>(null);
 
-  useEffect(() => {
-    // Simulate checking for a stored session
-    const storedUser = localStorage.getItem("thinkflow_user")
-    if (storedUser) {
-      setUser(JSON.parse(storedUser))
-    }
-    setIsLoading(false)
-  }, [])
+  const signIn = () => {
+    // Mock sign in for demo
+    setUser({
+      id: "1",
+      name: "Demo User",
+      email: "user@example.com",
+    });
+  };
 
-  const signIn = async () => {
-    setIsLoading(true)
-    try {
-      // Simulate authentication
-      const mockUser: User = {
-        id: "user_" + Math.random().toString(36).substring(2, 9),
-        name: "Demo User",
-        email: "demo@example.com",
-        image: "/placeholder.svg?height=40&width=40",
-      }
+  const signOut = () => {
+    setUser(null);
+  };
 
-      setUser(mockUser)
-      localStorage.setItem("thinkflow_user", JSON.stringify(mockUser))
-
-      toast({
-        title: "Signed in successfully",
-        description: "Welcome to ThinkFlowGPT!",
-      })
-    } catch (error) {
-      console.error("Sign in error:", error)
-      toast({
-        title: "Sign in failed",
-        description: "There was a problem signing you in.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const signOut = async () => {
-    setIsLoading(true)
-    try {
-      setUser(null)
-      localStorage.removeItem("thinkflow_user")
-
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully.",
-      })
-    } catch (error) {
-      console.error("Sign out error:", error)
-      toast({
-        title: "Sign out failed",
-        description: "There was a problem signing you out.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return <AuthContext.Provider value={{ user, signIn, signOut, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
-}
-
+export const useAuth = () => useContext(AuthContext);

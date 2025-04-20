@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { SparklesCore } from "@/components/sparkles";
@@ -66,13 +67,13 @@ export function HeroSection() {
                 Try for free
               </Button>
             </Link>
-            <Link href="/dashboard">
+            <Link href="/features">
               <Button
                 size="lg"
                 variant="outline"
                 className="text-white border-purple-500 hover:bg-purple-500/20 h-12 px-8 rounded-full"
               >
-                Dashboard
+                Explore features <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </motion.div>

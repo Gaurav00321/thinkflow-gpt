@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroSection } from "@/components/hero-section";
-import { Features } from "@/components/features";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import FeatureGrid from "@/components/features/feature-grid";
 
 export default function Home() {
   return (
@@ -11,7 +11,8 @@ export default function Home() {
       <Navbar />
       <main className="flex-1">
         <HeroSection />
-        <Features />
+        <FeatureGrid />
+        
         <section className="container py-24 sm:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-black/[0.96] bg-grid-white/[0.02]"></div>
           <div className="mx-auto flex max-w-[58rem] flex-col items-center justify-center gap-4 text-center relative z-10">
