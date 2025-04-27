@@ -36,7 +36,7 @@ interface SupportTabsProps {
 export function SupportTabs({ faqs }: SupportTabsProps) {
   return (
     <Tabs defaultValue="self-help" className="w-full max-w-4xl mx-auto">
-      <TabsList className="grid w-full grid-cols-3 mb-12">
+      <TabsList className="grid w-full grid-cols-3 mb-12 overflow-x-auto">
         <TabsTrigger
           value="self-help"
           className="transition-all duration-300 ease-in-out"

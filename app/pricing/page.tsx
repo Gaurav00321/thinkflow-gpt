@@ -181,7 +181,7 @@ export default function PricingPage() {
               },
               {
                 name: "Pro",
-                price: isAnnual ? "19" : "24",
+                price: isAnnual ? "200" : "24",
                 description: "For individuals and small teams",
                 features: [
                   "Unlimited AI workflows",
@@ -197,7 +197,7 @@ export default function PricingPage() {
               },
               {
                 name: "Enterprise",
-                price: isAnnual ? "49" : "59",
+                price: isAnnual ? "500" : "59",
                 description: "For organizations with advanced needs",
                 features: [
                   "Unlimited everything",

@@ -14,15 +14,11 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
-  Sparkles,
   BookOpen,
   LifeBuoy,
-  Mail,
-  Cpu,
-  Phone,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { SupportTabs } from "@/components/support-tabs";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const faqs = [
   {
@@ -71,7 +67,8 @@ export default function SupportPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState("faqs");
+  const [showSupportTabs, setShowSupportTabs] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     setIsLoaded(true);
@@ -240,12 +237,14 @@ export default function SupportPage() {
                   {
                     icon: <LifeBuoy className="h-5 w-5 text-purple-400" />,
                     text: "Live Support",
+                    onClick: () => setShowSupportTabs(true),
                   },
                 ].map((item, index) => (
                   <motion.div
                     key={index}
                     whileHover={{ scale: 1.05 }}
-                    className="flex flex-col items-center justify-center p-4 rounded-lg bg-purple-900/20 backdrop-blur-md border border-purple-500/20"
+                    className="flex flex-col items-center justify-center p-4 rounded-lg bg-purple-900/20 backdrop-blur-md border border-purple-500/20 cursor-pointer"
+                    onClick={item.onClick}
                   >
                     {item.icon}
                     <span className="mt-2 text-sm text-purple-100">
@@ -265,78 +264,49 @@ export default function SupportPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
+            className="max-w-4xl mx-auto"
           >
-            <Tabs
-              defaultValue="faqs"
-              className="w-full"
-              value={activeTab}
-              onValueChange={setActiveTab}
-            >
-              <div className="flex justify-center mb-8">
-                <TabsList className="bg-purple-950/30 border border-purple-700/30 p-1">
-                  <TabsTrigger
-                    value="faqs"
-                    className="data-[state=active]:bg-purple-700 data-[state=active]:text-white"
-                  >
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    FAQs
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="guides"
-                    className="data-[state=active]:bg-purple-700 data-[state=active]:text-white"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Guides
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="community"
-                    className="data-[state=active]:bg-purple-700 data-[state=active]:text-white"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Community
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="contact"
-                    className="data-[state=active]:bg-purple-700 data-[state=active]:text-white"
-                  >
-                    <Mail className="h-4 w-4 mr-2" />
-                    Contact
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent value="faqs" className="mt-0">
-                <motion.div
-                  variants={itemVariants}
-                  className="max-w-4xl mx-auto space-y-4"
+            {showSupportTabs ? (
+              <div className="mb-8">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSupportTabs(false)}
+                  className="mb-6 border-purple-700/30 text-purple-200 hover:bg-purple-800/30"
                 >
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Frequently Asked Questions
-                    </h2>
-                    <p className="text-purple-200/70">
-                      Find quick answers to common questions about ThinkFlowGPT
-                    </p>
-                  </div>
+                  ← Back to Support Center
+                </Button>
+                <SupportTabs faqs={faqs} />
+              </div>
+            ) : (
+              <div className="space-y-12">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Frequently Asked Questions
+                  </h2>
+                  <p className="text-purple-200/70">
+                    Find quick answers to common questions about ThinkFlowGPT
+                  </p>
+                </div>
 
-                  {filteredFaqs.length === 0 ? (
-                    <div className="text-center py-12">
-                      <HelpCircle className="h-12 w-12 mx-auto text-purple-400 mb-4" />
-                      <h3 className="text-xl font-bold text-white mb-2">
-                        No results found
-                      </h3>
-                      <p className="text-purple-200/70 mb-6">
-                        We couldn't find any FAQs matching your search query.
-                      </p>
-                      <Button
-                        onClick={() => setSearchQuery("")}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        Clear Search
-                      </Button>
-                    </div>
-                  ) : (
-                    filteredFaqs.map((faq, index) => (
+                {filteredFaqs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <HelpCircle className="h-12 w-12 mx-auto text-purple-400 mb-4" />
+                    <h3 className="text-xl font-bold text-white mb-2">
+                      No results found
+                    </h3>
+                    <p className="text-purple-200/70 mb-6">
+                      We couldn't find any FAQs matching your search query.
+                    </p>
+                    <Button
+                      onClick={() => setSearchQuery("")}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      Clear Search
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredFaqs.map((faq, index) => (
                       <motion.div
                         key={index}
                         initial={{ opacity: 0, y: 20 }}
@@ -352,9 +322,9 @@ export default function SupportPage() {
                             {faq.question}
                           </h3>
                           {expandedFaq === index ? (
-                            <ChevronUp className="h-5 w-5 text-purple-400" />
+                            <ChevronUp className="h-5 w-5 text-purple-400 flex-shrink-0" />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-purple-400" />
+                            <ChevronDown className="h-5 w-5 text-purple-400 flex-shrink-0" />
                           )}
                         </button>
                         <AnimatePresence>
@@ -372,233 +342,54 @@ export default function SupportPage() {
                           )}
                         </AnimatePresence>
                       </motion.div>
-                    ))
-                  )}
-                </motion.div>
-              </TabsContent>
-
-              <TabsContent value="guides" className="mt-0">
-                <motion.div
-                  variants={itemVariants}
-                  className="max-w-4xl mx-auto"
-                >
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Getting Started Guides
-                    </h2>
-                    <p className="text-purple-200/70">
-                      Step-by-step tutorials to help you make the most of
-                      ThinkFlowGPT
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[
-                      {
-                        title: "Getting Started with ThinkFlowGPT",
-                        description:
-                          "Learn the basics and set up your first AI workflow",
-                        icon: <Sparkles className="h-5 w-5" />,
-                      },
-                      {
-                        title: "Creating Custom Workflows",
-                        description:
-                          "Build powerful automation sequences with our no-code editor",
-                        icon: <FileText className="h-5 w-5" />,
-                      },
-                      {
-                        title: "Integrating with Your Tools",
-                        description:
-                          "Connect ThinkFlowGPT with your existing software stack",
-                        icon: <Cpu className="h-5 w-5" />,
-                      },
-                      {
-                        title: "Advanced AI Techniques",
-                        description:
-                          "Take your AI workflows to the next level with advanced features",
-                        icon: <BookOpen className="h-5 w-5" />,
-                      },
-                    ].map((guide, index) => (
-                      <motion.div
-                        key={index}
-                        whileHover={{ y: -5 }}
-                        className="rounded-lg border border-purple-700/30 bg-purple-950/20 p-6 hover:border-purple-500/50 transition-all duration-300"
-                      >
-                        <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-4">
-                          {guide.icon}
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-2">
-                          {guide.title}
-                        </h3>
-                        <p className="text-purple-200/70 mb-4">
-                          {guide.description}
-                        </p>
-                        <Button
-                          variant="link"
-                          className="text-purple-400 hover:text-purple-300 p-0"
-                        >
-                          Read Guide →
-                        </Button>
-                      </motion.div>
                     ))}
                   </div>
-                </motion.div>
-              </TabsContent>
+                )}
 
-              <TabsContent value="community" className="mt-0">
-                <motion.div
-                  variants={itemVariants}
-                  className="max-w-4xl mx-auto"
-                >
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Community Support
-                    </h2>
-                    <p className="text-purple-200/70">
-                      Connect with other ThinkFlowGPT users and our team
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
+                  <motion.div
+                    variants={itemVariants}
+                    whileHover={{ y: -5 }}
+                    className="rounded-lg border border-purple-700/30 bg-purple-950/20 p-6 hover:border-purple-500/50 transition-all duration-300"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-4">
+                      <LifeBuoy className="h-6 w-6 text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      Need More Help?
+                    </h3>
+                    <p className="text-purple-200/70 mb-4">
+                      Access our comprehensive support options for personalized
+                      assistance
                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[
-                      {
-                        title: "Discord Community",
-                        description:
-                          "Join our active Discord server to chat with other users and get help",
-                        button: "Join Discord",
-                        icon: <MessageCircle className="h-5 w-5" />,
-                      },
-                      {
-                        title: "User Forums",
-                        description:
-                          "Browse discussions or start your own thread on our community forums",
-                        button: "Visit Forums",
-                        icon: <MessageCircle className="h-5 w-5" />,
-                      },
-                      {
-                        title: "GitHub Repository",
-                        description:
-                          "Contribute to our open source components or report issues",
-                        button: "View on GitHub",
-                        icon: <FileText className="h-5 w-5" />,
-                      },
-                    ].map((community, index) => (
-                      <motion.div
-                        key={index}
-                        whileHover={{ y: -5 }}
-                        className="rounded-lg border border-purple-700/30 bg-purple-950/20 p-6 hover:border-purple-500/50 transition-all duration-300 flex flex-col"
-                      >
-                        <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-4">
-                          {community.icon}
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-2">
-                          {community.title}
-                        </h3>
-                        <p className="text-purple-200/70 mb-4 flex-grow">
-                          {community.description}
-                        </p>
-                        <Button className="bg-purple-700 hover:bg-purple-600 w-full">
-                          {community.button}
-                        </Button>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              </TabsContent>
-
-              <TabsContent value="contact" className="mt-0">
-                <motion.div
-                  variants={itemVariants}
-                  className="max-w-4xl mx-auto"
-                >
-                  <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      Contact Support
-                    </h2>
-                    <p className="text-purple-200/70">
-                      Get in touch with our support team for personalized help
+                    <Button
+                      className="bg-purple-600 hover:bg-purple-700 w-full"
+                      onClick={() => setShowSupportTabs(true)}
+                    >
+                      View Support Options
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    variants={itemVariants}
+                    whileHover={{ y: -5 }}
+                    className="rounded-lg border border-purple-700/30 bg-purple-950/20 p-6 hover:border-purple-500/50 transition-all duration-300"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-4">
+                      <MessageCircle className="h-6 w-6 text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      Join Our Community
+                    </h3>
+                    <p className="text-purple-200/70 mb-4">
+                      Connect with other users and share tips and tricks
                     </p>
-                  </div>
-
-                  <Card className="border-purple-700/30 bg-purple-950/20">
-                    <CardContent className="p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                          <h3 className="text-xl font-medium text-white mb-4">
-                            Contact Options
-                          </h3>
-                          <ul className="space-y-4">
-                            <li className="flex items-start">
-                              <Mail className="h-5 w-5 text-purple-400 mt-0.5 mr-3" />
-                              <div>
-                                <h4 className="font-medium text-white">
-                                  Email Support
-                                </h4>
-                                <p className="text-purple-200/70 text-sm mb-1">
-                                  For general inquiries and non-urgent issues
-                                </p>
-                                <a
-                                  href="mailto:support@thinkflowgpt.com"
-                                  className="text-purple-400 hover:text-purple-300 text-sm"
-                                >
-                                  support@thinkflowgpt.com
-                                </a>
-                              </div>
-                            </li>
-                            <li className="flex items-start">
-                              <MessageCircle className="h-5 w-5 text-purple-400 mt-0.5 mr-3" />
-                              <div>
-                                <h4 className="font-medium text-white">
-                                  Live Chat
-                                </h4>
-                                <p className="text-purple-200/70 text-sm mb-1">
-                                  Available Monday-Friday, 9am-5pm EST
-                                </p>
-                                <Button
-                                  variant="link"
-                                  className="text-purple-400 hover:text-purple-300 p-0 h-auto text-sm"
-                                >
-                                  Start Chat
-                                </Button>
-                              </div>
-                            </li>
-                            <li className="flex items-start">
-                              <Phone className="h-5 w-5 text-purple-400 mt-0.5 mr-3" />
-                              <div>
-                                <h4 className="font-medium text-white">
-                                  Phone Support
-                                </h4>
-                                <p className="text-purple-200/70 text-sm mb-1">
-                                  For Enterprise customers only
-                                </p>
-                                <p className="text-purple-400 text-sm">
-                                  +1 (800) 123-4567
-                                </p>
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-medium text-white mb-4">
-                            Submit a Ticket
-                          </h3>
-                          <p className="text-purple-200/70 mb-4">
-                            Need more detailed help? Submit a support ticket and
-                            our team will get back to you within 24 hours.
-                          </p>
-                          <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                            <Link href="/contact" className="flex items-center">
-                              <FileText className="h-4 w-4 mr-2" />
-                              Create Support Ticket
-                            </Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </TabsContent>
-            </Tabs>
+                    <Button className="bg-purple-600 hover:bg-purple-700 w-full">
+                      Join Discord
+                    </Button>
+                  </motion.div>
+                </div>
+              </div>
+            )}
           </motion.div>
         </section>
 

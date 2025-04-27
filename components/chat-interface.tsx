@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChatStore } from "@/hooks/use-chat-store";
-import { CodeBlock } from "@/components/code-block";
+import CodeBlock from "@/components/code-block";
 import { v4 as uuidv4 } from "uuid";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";

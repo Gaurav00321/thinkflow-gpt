@@ -181,7 +181,7 @@ export default function BlogPage() {
                   src="/blog/ai-ethics-thinkflowgpt.png"
                   alt="AI Ethics: Our Approach at ThinkFlowGPT"
                   fill
-                  className="object-cover transition-transform duration-500 hover:scale-105"
+                  className="object-fill transition-transform duration-500 hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                 <div className="absolute bottom-4 left-4">
