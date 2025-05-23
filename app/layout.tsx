@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { ConvexClientProvider } from "@/components/convex-provider";
 import { AuthProvider } from "@/components/auth-provider";
 
+import '@/styles/prism-theme.css';
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {

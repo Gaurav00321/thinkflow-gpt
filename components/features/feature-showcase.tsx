@@ -115,8 +115,8 @@ const features = [
 
 export default function FeatureShowcase() {
   return (
-    <section className="py-20 relative z-10">
-      <div className="container mx-auto px-4">
+    <section className="py-12 sm:py-20 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6">
         {features.map((feature, index) => (
           <FeatureDetail
             key={feature.id}
@@ -137,21 +137,18 @@ function FeatureDetail({
   reverse: boolean;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  // Change the useInView configuration to keep animations visible
-  // Set once: true to ensure animations stay visible after they appear
-  // Increase threshold to 0.2 for earlier triggering
   const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
 
   return (
     <div
       id={feature.id}
       ref={sectionRef}
-      className="mb-32 last:mb-0 scroll-mt-20"
+      className="mb-20 sm:mb-32 last:mb-0 scroll-mt-20"
     >
       <div
         className={`flex flex-col ${
           reverse ? "lg:flex-row-reverse" : "lg:flex-row"
-        } gap-12 items-center`}
+        } gap-8 sm:gap-12 items-center`}
       >
         {/* Text content */}
         <motion.div
@@ -162,19 +159,21 @@ function FeatureDetail({
               : { opacity: 0, x: reverse ? 50 : -50 }
           }
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="lg:w-1/2"
+          className="w-full lg:w-1/2 px-4"
         >
           <div
-            className={`w-16 h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg`}
+            className={`w-14 sm:w-16 h-14 sm:h-16 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg`}
           >
-            <feature.icon className="h-8 w-8 text-white" />
+            <feature.icon className="h-7 sm:h-8 w-7 sm:w-8 text-white" />
           </div>
 
-          <h2 className="text-3xl font-bold mb-4 text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-white">
             {feature.title}
           </h2>
 
-          <p className="text-gray-300 text-lg mb-6">{feature.description}</p>
+          <p className="text-base sm:text-lg text-gray-300 mb-6">
+            {feature.description}
+          </p>
 
           <ul className="space-y-3 mb-8">
             {feature.points.map((point, index) => (
@@ -184,19 +183,19 @@ function FeatureDetail({
                 animate={
                   isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }
                 }
-                // Add a slightly longer delay for each list item
                 transition={{ duration: 0.5, delay: 0.15 * index }}
-                className="flex items-start"
+                className="flex items-start space-x-3"
               >
                 <div
-                  className={`mt-1 mr-3 w-5 h-5 rounded-full bg-gradient-to-br ${feature.color} flex items-center justify-center flex-shrink-0`}
+                  className={`mt-1 mr-3 w-4 sm:w-5 h-4 sm:h-5 rounded-full bg-gradient-to-br ${feature.color} flex items-center justify-center flex-shrink-0`}
                 >
                   <svg
-                    width="12"
-                    height="12"
+                    width="10"
+                    height="10"
                     viewBox="0 0 12 12"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    className="w-2.5 sm:w-3 h-2.5 sm:h-3"
                   >
                     <path
                       d="M10 3L4.5 8.5L2 6"
@@ -207,17 +206,17 @@ function FeatureDetail({
                     />
                   </svg>
                 </div>
-                <span className="text-gray-200">{point}</span>
+                <span className="text-sm sm:text-base text-gray-200">{point}</span>
               </motion.li>
             ))}
           </ul>
 
           <Link
             href={`/features/${feature.id}`}
-            className="group inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white font-medium transition-all hover:from-purple-700 hover:to-purple-900"
+            className="group inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 text-white font-medium transition-all hover:from-purple-700 hover:to-purple-900 text-sm sm:text-base"
           >
             See It in Action
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>
 
@@ -230,21 +229,21 @@ function FeatureDetail({
               : { opacity: 0, scale: 0.9, x: reverse ? -50 : 50 }
           }
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="lg:w-1/2"
+          className="w-full lg:w-1/2"
         >
           <div className="relative rounded-xl overflow-hidden shadow-2xl border border-purple-900/30 bg-gradient-to-br from-gray-900 to-black p-1">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-purple-800/10 opacity-50" />
 
             {/* Browser-like frame */}
             <div className="relative rounded-lg overflow-hidden">
-              <div className="bg-gray-900 px-4 py-2 flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <div className="bg-gray-900 px-3 sm:px-4 py-2 flex items-center space-x-2">
+                <div className="flex space-x-1 sm:space-x-2">
+                  <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-red-500"></div>
+                  <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-2.5 sm:w-3 h-2.5 sm:h-3 rounded-full bg-green-500"></div>
                 </div>
-                <div className="flex-1 bg-gray-800 rounded-md h-6 flex items-center justify-center">
-                  <div className="w-3/4 h-2 bg-gray-700 rounded-full"></div>
+                <div className="flex-1 bg-gray-800 rounded-md h-5 sm:h-6 flex items-center justify-center">
+                  <div className="w-3/4 h-1.5 sm:h-2 bg-gray-700 rounded-full"></div>
                 </div>
               </div>
 
@@ -255,8 +254,6 @@ function FeatureDetail({
                   fill
                   className="object-cover"
                 />
-
-                {/* Animated glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-purple-600/0 via-purple-600/0 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               </div>
             </div>

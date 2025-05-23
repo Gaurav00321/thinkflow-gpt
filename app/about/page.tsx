@@ -1,82 +1,206 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
-import type { Metadata } from "next"
-import { GraduationCap, Briefcase, Linkedin, Github, ArrowRight, Mail } from "lucide-react"
+import { GraduationCap, Briefcase, Linkedin, Github, ArrowRight, Mail, Star, Check } from "lucide-react"
+import { motion } from "framer-motion"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-
-export const metadata: Metadata = {
-  title: "About ThinkFlowGPT | AI-Powered Workflow Automation",
-  description:
-    "Learn about ThinkFlowGPT, an AI-powered workflow automation assistant founded by Gaurav Upadhyay to simplify tasks and boost productivity for students and businesses.",
-}
+import { SparklesCore } from "@/components/sparkles"
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-black text-white">
       {/* Hero Section */}
-      <Navbar />
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-transparent pointer-events-none" />
-        <div className="container mx-auto px-4 py-16 md:py-24">
+      <Navbar />      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden pt-20">
+        {/* Animated background effects */}
+        <div className="absolute inset-0">
+          <SparklesCore
+            id="tsparticlesabout"
+            background="transparent"
+            minSize={0.6}
+            maxSize={1.4}
+            particleDensity={40}
+            className="w-full h-full"
+            particleColor="#FFFFFF"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-black to-black" />
+          <div className="absolute top-0 -left-[10%] w-[70%] aspect-square rounded-full bg-purple-900/20 blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 -right-[10%] w-[70%] aspect-square rounded-full bg-purple-800/20 blur-3xl animate-pulse delay-700" />
+        </div>
+
+        <div className="container relative mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600">
-              About ThinkFlowGPT
-            </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8">
-              Empowering productivity through intelligent automation
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 mb-8 text-base text-purple-300 backdrop-blur-sm">
+                <Star className="mr-2 h-4 w-4" />
+                Our Vision & Mission
+              </div>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 via-purple-400 to-purple-600">
+                About ThinkFlowGPT
+              </h1>
+              <p className="text-lg md:text-xl text-purple-100/80 mb-12 max-w-3xl mx-auto leading-relaxed">
+                Empowering individuals and businesses to achieve more through intelligent automation and AI-driven solutions
+              </p>
+              <div className="flex items-center justify-center gap-6 text-purple-300/80">
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 mr-2 text-purple-500" />
+                  <span>AI-Powered</span>
+                </div>
+                <div className="h-1 w-1 rounded-full bg-purple-500/50" />
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 mr-2 text-purple-500" />
+                  <span>User-Friendly</span>
+                </div>
+                <div className="h-1 w-1 rounded-full bg-purple-500/50" />
+                <div className="flex items-center">
+                  <Check className="h-5 w-5 mr-2 text-purple-500" />
+                  <span>Secure</span>
+                </div>
+              </div>
+            </motion.div>
           </div>
+        </div>        {/* Decorative bottom curve and scroll indicator */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg
+            viewBox="0 0 1440 116"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-full text-purple-900/10"
+          >
+            <path
+              d="M1440 64.5909C1440 64.5909 1088.5 116 720 116C351.5 116 0 64.5909 0 64.5909V0H1440V64.5909Z"
+              fill="currentColor"
+            />
+          </svg>
+          <motion.div 
+            className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
+            animate={{
+              y: [0, 10, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <div className="flex flex-col items-center text-purple-300/60 hover:text-purple-300/80 transition-colors cursor-pointer">
+              <ArrowRight className="h-5 w-5 transform rotate-90" />
+              <span className="text-sm">Scroll to explore</span>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      {/* Main Content */}      <section className="container mx-auto px-4 py-24 relative">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black" />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative">
           <div className="order-2 lg:order-1">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-purple-400">What is ThinkFlowGPT?</h2>
-            <p className="text-gray-300 mb-6">
-              ThinkFlowGPT is an AI-powered workflow automation assistant designed to simplify tasks, boost
-              productivity, and streamline operations for both students and businesses. Built with modern technology and
-              intuitive design, it enables users to automate complex tasks using a user-friendly interface.
-            </p>
-            <div className="flex flex-wrap gap-4 mt-8">
-              <Link
-                href="/features"
-                className="inline-flex items-center px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white font-medium transition-all"
-              >
-                Explore Features <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-              <Link
-                href="/chat"
-                className="inline-flex items-center px-6 py-3 rounded-lg bg-black border border-purple-600 hover:bg-purple-900/20 text-white font-medium transition-all"
-              >
-                See Demo
-              </Link>
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-purple-400">
+                  What is ThinkFlowGPT?
+                </h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-purple-500 to-purple-700 rounded-full mb-6" />
+                <p className="text-lg text-purple-100/80 leading-relaxed mb-6">
+                  ThinkFlowGPT is an AI-powered workflow automation assistant designed to revolutionize how tasks are handled. 
+                  Built with cutting-edge technology and intuitive design, it empowers both students and businesses to:
+                </p>
+                <ul className="space-y-4 text-purple-100/80">
+                  <li className="flex items-start">
+                    <div className="mr-3 mt-1">
+                      <div className="h-2 w-2 rounded-full bg-purple-500" />
+                    </div>
+                    <span>Automate complex tasks with a user-friendly interface</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="mr-3 mt-1">
+                      <div className="h-2 w-2 rounded-full bg-purple-500" />
+                    </div>
+                    <span>Boost productivity through intelligent process optimization</span>
+                  </li>
+                  <li className="flex items-start">
+                    <div className="mr-3 mt-1">
+                      <div className="h-2 w-2 rounded-full bg-purple-500" />
+                    </div>
+                    <span>Streamline operations with AI-powered insights</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/features"
+                  className="group inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white font-medium transition-all duration-300 shadow-lg shadow-purple-500/25"
+                >
+                  Explore Features 
+                  <ArrowRight className="ml-2 h-4 w-4 transform transition-transform group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="/chat"
+                  className="inline-flex items-center px-6 py-3 rounded-xl bg-black/40 backdrop-blur-sm border-2 border-purple-500/30 hover:border-purple-400/50 hover:bg-purple-900/20 text-white font-medium transition-all duration-300"
+                >
+                  Try Demo
+                </Link>
+              </div>
             </div>
           </div>
-          <div className="order-1 lg:order-2 bg-gradient-to-br from-purple-900/30 to-black p-8 rounded-2xl">
-            <div className="aspect-video relative rounded-xl overflow-hidden bg-gradient-to-br from-purple-800/20 to-black flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-              <div className="relative z-10 text-center p-6">
-                <div className="inline-block p-3 bg-purple-900/50 rounded-full mb-4">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-12 w-12 text-purple-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+
+          <div className="order-1 lg:order-2">
+            <div className="relative">
+              {/* Card background with blur effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-purple-900/20 backdrop-blur-xl rounded-2xl transform rotate-2" />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-purple-900/20 backdrop-blur-xl rounded-2xl transform -rotate-2" />
+              
+              {/* Main content card */}
+              <div className="relative bg-gradient-to-br from-purple-900/90 to-black border border-purple-500/20 p-8 rounded-2xl backdrop-blur-sm">
+                <div className="aspect-video relative rounded-xl overflow-hidden">
+                  <Image
+                    src="/thinkflowgpt-ai-chat.jpeg"
+                    alt="ThinkFlowGPT Interface"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+                  <div className="absolute inset-0 p-8 flex flex-col items-center justify-center text-center">
+                    <div className="inline-flex h-16 w-16 items-center justify-center rounded-xl bg-purple-600/20 backdrop-blur-sm ring-1 ring-purple-500/30 mb-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-purple-300"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-3">AI-Powered Automation</h3>
+                    <p className="text-lg text-purple-100/90">Transform your workflow with intelligent task automation</p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">AI-Powered Automation</h3>
-                <p className="text-gray-300">Streamline your workflow with intelligent task automation</p>
+
+                {/* Feature highlights */}
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div className="bg-purple-900/20 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20">
+                    <div className="text-purple-300 mb-2">Processing Speed</div>
+                    <div className="text-2xl font-bold text-white">10x Faster</div>
+                  </div>
+                  <div className="bg-purple-900/20 backdrop-blur-sm rounded-lg p-4 border border-purple-500/20">
+                    <div className="text-purple-300 mb-2">Task Automation</div>
+                    <div className="text-2xl font-bold text-white">95% Accurate</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

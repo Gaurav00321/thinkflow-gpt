@@ -5,6 +5,7 @@ import type React from "react";
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
+import { SparklesCore } from "@/components/sparkles";
 import {
   MessageSquareCode,
   Code2,
@@ -74,31 +75,45 @@ const features = [
 // Update the FeatureGrid component to keep animations visible
 export default function FeatureGrid() {
   const gridRef = useRef<HTMLDivElement>(null);
-  // Change to once: true to ensure animations stay visible after they appear
   const isInView = useInView(gridRef, { once: true, amount: 0.2 });
-
   return (
-    <section className="py-20 relative z-10">
-      <div className="container mx-auto px-4">
+    <section className="py-12 sm:py-20 relative z-10">
+      {/* Particle background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <SparklesCore
+          id="tsparticlesfeatures"
+          background="transparent"
+          minSize={0.6}
+          maxSize={1.4}
+          particleDensity={60}
+          className="w-full h-full"
+          particleColor="#FFFFFF"
+        />
+      </div>
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-black to-black pointer-events-none" />
+      
+      <div className="container mx-auto px-4 sm:px-6 relative">
         <motion.div
           ref={gridRef}
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          className="text-center mb-12 sm:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600">
               Supercharge Your Productivity
             </span>
           </h2>
-          <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-300 max-w-3xl mx-auto px-4">
             Explore our powerful features designed to transform how you work and
             automate your daily tasks.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature) => (
             <FeatureCard
               key={feature.id}
@@ -120,36 +135,40 @@ function FeatureCard({
   isInView: boolean;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
+    <motion.div      initial={{ opacity: 0, y: 30 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.5, delay: feature.delay }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="group relative bg-gradient-to-br from-gray-900 to-black p-1 rounded-xl overflow-hidden"
-    >
-      {/* Animated border */}
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur" />
-
-      <div className="relative bg-black rounded-lg p-6 h-full flex flex-col">
-        <div
-          className={`w-14 h-14 rounded-lg bg-gradient-to-br ${feature.color} flex items-center justify-center mb-5 shadow-lg`}
+      transition={{ duration: 0.5, delay: feature.delay }}      whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.3 } }}
+      className="group relative p-1 rounded-xl overflow-hidden"
+    >      {/* Base background with minimal gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900/40 to-gray-900/30 rounded-xl backdrop-blur-[3px] transition-all duration-300 group-hover:from-purple-900/30 group-hover:to-violet-900/20" />
+      
+      {/* Border with enhanced contrast */}
+      <div className="absolute inset-0 rounded-xl border border-white/10 group-hover:border-purple-500/30 transition-all duration-300" />
+      
+      {/* Ambient glow for depth */}
+      <div className="absolute -inset-3 bg-gradient-to-r from-purple-500/5 via-violet-500/5 to-fuchsia-500/5 rounded-[24px] opacity-0 group-hover:opacity-100 transition-all duration-500 blur-2xl" />
+      
+      <div className="relative rounded-lg p-5 sm:p-6 h-full flex flex-col backdrop-blur-[2px]">        <div className={`w-12 sm:w-14 h-12 sm:h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 sm:mb-5 shadow-lg group-hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-all duration-300 border border-white/20`}
         >
-          <feature.icon className="h-7 w-7 text-white" />
+          <feature.icon className="h-6 w-6 sm:h-7 sm:w-7 text-white shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
         </div>
 
-        <h3 className="text-xl font-bold mb-3 text-white group-hover:text-purple-400 transition-colors">
+        <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r from-white via-purple-200 to-purple-300 transition-all duration-300">
           {feature.title}
         </h3>
 
-        <p className="text-gray-400 mb-5 flex-grow">{feature.description}</p>
+        <p className="text-sm sm:text-base text-gray-300 group-hover:text-white mb-4 sm:mb-5 flex-grow transition-colors leading-relaxed">
+          {feature.description}
+        </p>
 
-        <Link href={`features#${feature.id}`}>
-          <motion.div
-            whileHover={{ x: 5 }}
-            className="flex items-center text-purple-400 font-medium"
+        <Link href={`features#${feature.id}`}>          <motion.div
+            whileHover={{ x: 5 }}            className="flex items-center text-purple-300 hover:text-purple-200 font-medium text-sm sm:text-base transition-all duration-300 group/link"
           >
-            <span>Learn more</span>
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <span className="relative">
+              Learn more
+              <span className="absolute inset-x-0 -bottom-0.5 h-px bg-gradient-to-r from-purple-300/0 via-purple-300/90 to-purple-300/0 opacity-0 group-hover/link:opacity-100 transition-all duration-300" />
+            </span>
+            <ArrowRight className="ml-2 h-4 w-4 transform transition-all duration-300 group-hover/link:translate-x-1 group-hover/link:text-purple-300" />
           </motion.div>
         </Link>
       </div>

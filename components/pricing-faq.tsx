@@ -33,18 +33,41 @@ const faqs = [
   },
 ]
 
-export function PricingFAQ() {
-  return (
-    <section className="container py-12 md:py-24">
-      <div className="mx-auto max-w-[58rem]">
-        <h2 className="mb-8 text-center text-3xl font-bold leading-tight tracking-tighter md:text-4xl">
-          Frequently Asked Questions
-        </h2>
-        <Accordion type="single" collapsible className="w-full">
+export function PricingFAQ() {  return (
+    <section className="container relative py-12 md:py-24">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-[20%] -left-[10%] w-[50%] aspect-square rounded-full bg-purple-900/10 blur-3xl" />
+        <div className="absolute bottom-[20%] -right-[10%] w-[50%] aspect-square rounded-full bg-purple-800/10 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-[58rem]">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-200 via-purple-400 to-purple-600 mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-lg text-purple-200/80">
+            Find answers to common questions about our plans and features
+          </p>
+        </div>
+
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full space-y-4"
+        >
           {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
-              <AccordionContent>{faq.answer}</AccordionContent>
+            <AccordionItem 
+              key={index} 
+              value={`item-${index}`}
+              className="border border-purple-500/20 bg-black/40 backdrop-blur-xl rounded-xl px-6"
+            >
+              <AccordionTrigger className="text-left hover:text-purple-400 transition-colors [&[data-state=open]>svg]:text-purple-400">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent className="text-purple-200/80">
+                {faq.answer}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

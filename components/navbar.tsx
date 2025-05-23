@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
@@ -105,7 +104,7 @@ export function Navbar() {
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6 md:gap-10">
+        <div className="flex items-center gap-4 sm:gap-6 md:gap-10">
           <Link href="/" className="group flex items-center space-x-2">
             <motion.div
               whileHover={{ rotate: 360 }}
@@ -115,7 +114,7 @@ export function Navbar() {
               <BrainCircuit className="h-5 w-5 text-white" />
             </motion.div>
             <motion.span
-              className="hidden font-bold sm:inline-block text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600"
+              className="hidden sm:inline-block font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -123,7 +122,7 @@ export function Navbar() {
             </motion.span>
           </Link>
 
-          <nav className="hidden gap-6 md:flex">
+          <nav className="hidden md:flex gap-1 lg:gap-6">
             {routes.map((route) => (
               <Link
                 key={route.href}
@@ -158,23 +157,24 @@ export function Navbar() {
           </nav>
 
           <button
-            className="flex items-center space-x-2 md:hidden"
+            className="flex items-center gap-2 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-1.5 rounded-md hover:bg-gray-100/10"
+            >
               {isMenuOpen ? (
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-6 w-6" />
+                <Menu className="h-5 w-5" />
               )}
             </motion.div>
-            <span className="font-bold text-xl">ThinkFlowGPT</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-
+        <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -247,14 +247,13 @@ export function Navbar() {
                 className="relative"
               >
                 <Button
-                  className="relative overflow-hidden group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 border-none"
+                  className="relative overflow-hidden group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 border-none text-sm h-9 px-4"
                   variant="default"
                 >
                   <span className="relative z-10">Sign in</span>
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-md" />
                   <Sparkles className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
                 </Button>
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-400 to-purple-600 opacity-0 group-hover:opacity-70 blur-sm transition-all duration-300 rounded-md" />
               </motion.div>
             </Link>
           )}
@@ -269,9 +268,9 @@ export function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="container md:hidden overflow-hidden"
+            className="md:hidden overflow-hidden bg-background/95 backdrop-blur-lg border-b"
           >
-            <nav className="flex flex-col gap-3 py-4">
+            <nav className="container flex flex-col py-4">
               {routes.map((route) => (
                 <motion.div
                   key={route.href}
@@ -281,7 +280,7 @@ export function Navbar() {
                 >
                   <Link
                     href={route.href}
-                    className={`flex items-center px-2 py-2 rounded-md transition-colors ${
+                    className={`flex items-center px-3 py-2.5 rounded-md text-sm transition-colors ${
                       route.active
                         ? "bg-gradient-to-r from-purple-500/20 to-purple-700/20 text-foreground"
                         : "text-foreground/60 hover:text-foreground hover:bg-gradient-to-r hover:from-purple-500/10 hover:to-purple-700/10"

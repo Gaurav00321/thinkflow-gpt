@@ -9,7 +9,7 @@ import { RoboAnimation } from "@/components/robo-animation";
 
 export function HeroSection() {
   return (
-    <div className="relative min-h-[calc(100vh-76px)] flex items-center bg-black/[0.96] bg-grid-white/[0.02]">
+    <div className="relative h-[100vh] flex items-center bg-black/[0.96] bg-grid-white/[0.02]">
       {/* Ambient background with moving particles */}
       <div className="h-full w-full absolute inset-0 z-0 overflow-x-hidden">
         <SparklesCore
@@ -18,7 +18,7 @@ export function HeroSection() {
           minSize={0.6}
           maxSize={1.4}
           particleDensity={80}
-          className="w-full h-full"
+          className="w-full h-screen"
           particleColor="#FFFFFF"
         />
       </div>
@@ -26,9 +26,7 @@ export function HeroSection() {
       {/* Floating papers background */}
       <div className="absolute inset-0 overflow-hidden">
         <FloatingPaper count={8} />
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10">
+      </div>      <div className="container mx-auto px-6 relative z-10 mt-20">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -58,22 +56,42 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5"
-          >
-            <Link href="/chat">
+          >            <Link href="/chat">
               <Button
                 size="lg"
-                className="bg-purple-600 hover:bg-purple-700 text-white h-12 px-8 rounded-full shadow-lg shadow-purple-500/30"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white h-12 px-8 rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 transform transition-all duration-300 group"
               >
-                Try for free
+                <span className="flex items-center">
+                  <span className="mr-2">Start Creating</span>
+                  <span className="relative group-hover:translate-x-1 transition-transform duration-300">
+                    <span className="absolute top-0 -left-3 h-full w-8 bg-gradient-to-r from-purple-600/0 via-white/20 to-purple-600/0 rotate-45 animate-shimmer" />
+                    <svg
+                      className="w-5 h-5 group-hover:scale-110 transition-transform"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </span>
+                </span>
               </Button>
             </Link>
             <Link href="/features">
               <Button
                 size="lg"
                 variant="outline"
-                className="text-white border-purple-500 hover:bg-purple-500/20 h-12 px-8 rounded-full"
+                className="text-white border-purple-500 hover:border-purple-400 hover:bg-purple-500/10 h-12 px-8 rounded-full group hover:scale-105 transform transition-all duration-300 backdrop-blur-sm"
               >
-                Explore features <ArrowRight className="h-4 w-4" />
+                <span className="flex items-center">
+                  <span className="mr-2">Discover Possibilities</span>
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                </span>
               </Button>
             </Link>
           </motion.div>
