@@ -1,14 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
+import { Code, Copy } from "lucide-react"
+import { useState } from "react"
 
 const endpoints = [
-  {
-    name: "Chat Completions",
-    endpoint: "/v1/chat/completions",
-    method: "POST",
-    description: "Generate a response based on a conversation.",
-    request: `{
+	{
+		name: "Chat Completions",
+		endpoint: "/v1/chat/completions",
+		method: "POST",
+		description: "Generate a response based on a conversation.",
+		request: `{
   "messages": [
     {"role": "system", "content": "You are a helpful assistant."},
     {"role": "user", "content": "Hello, how are you?"}
@@ -16,7 +19,7 @@ const endpoints = [
   "max_tokens": 150,
   "temperature": 0.7
 }`,
-    response: `{
+		response: `{
   "id": "chat-12345",
   "object": "chat.completion",
   "created": 1677858242,
@@ -37,18 +40,18 @@ const endpoints = [
     "total_tokens": 34
   }
 }`,
-  },
-  {
-    name: "Code Generation",
-    endpoint: "/v1/code/generate",
-    method: "POST",
-    description: "Generate code based on a description.",
-    request: `{
+	},
+	{
+		name: "Code Generation",
+		endpoint: "/v1/code/generate",
+		method: "POST",
+		description: "Generate code based on a description.",
+		request: `{
   "language": "javascript",
   "prompt": "Write a function that calculates the factorial of a number",
   "comments": true
 }`,
-    response: `{
+		response: `{
   "id": "code-12345",
   "object": "code.generation",
   "created": 1677858242,
@@ -60,52 +63,125 @@ const endpoints = [
     "total_tokens": 40
   }
 }`,
-  },
+	},
 ]
 
 export function ApiEndpoints() {
-  return (
-    <section className="container py-12">
-      <div className="mx-auto max-w-[58rem]">
-        <h2 className="mb-8 text-3xl font-bold">API Endpoints</h2>
-        <div className="space-y-8">
-          {endpoints.map((endpoint, index) => (
-            <Card key={index}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{endpoint.name}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-primary/10 text-primary">
-                      {endpoint.method}
-                    </Badge>
-                  </div>
-                </div>
-                <p className="text-muted-foreground">{endpoint.description}</p>
-                <p className="font-mono text-sm text-muted-foreground">{endpoint.endpoint}</p>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="request">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="request">Request</TabsTrigger>
-                    <TabsTrigger value="response">Response</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="request" className="mt-0">
-                    <pre className="rounded-md bg-muted p-4 overflow-x-auto">
-                      <code>{endpoint.request}</code>
-                    </pre>
-                  </TabsContent>
-                  <TabsContent value="response" className="mt-0">
-                    <pre className="rounded-md bg-muted p-4 overflow-x-auto">
-                      <code>{endpoint.response}</code>
-                    </pre>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
+	const [selectedTab, setSelectedTab] = useState("Chat Completions")
+	const [copiedEndpoint, setCopiedEndpoint] = useState("")
+
+	const copyToClipboard = (text: string, endpoint: string) => {
+		navigator.clipboard.writeText(text)
+		setCopiedEndpoint(endpoint)
+		setTimeout(() => setCopiedEndpoint(""), 2000)
+	}
+
+	return (
+		<section className="container py-12">
+			<motion.div
+				initial={{ opacity: 0, y: 20 }}
+				whileInView={{ opacity: 1, y: 0 }}
+				viewport={{ once: true }}
+				transition={{ duration: 0.8 }}
+				className="mx-auto max-w-[64rem]"
+			>
+				<div className="text-center mb-12">
+					<motion.div
+						initial={{ opacity: 0, scale: 0.8 }}
+						whileInView={{ opacity: 1, scale: 1 }}
+						viewport={{ once: true }}
+						transition={{ delay: 0.2, duration: 0.5 }}
+						className="mb-4 inline-flex items-center rounded-full bg-purple-900/30 px-4 py-1 text-sm text-purple-200 backdrop-blur-md border border-purple-500/20"
+					>
+						<Code className="mr-2 h-4 w-4 text-purple-400" />
+						API Reference
+					</motion.div>
+					<h2 className="mb-4 text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-purple-200 to-purple-400">
+						Available Endpoints
+					</h2>
+					<p className="text-purple-100/80">
+						Explore our comprehensive API endpoints and start building
+					</p>
+				</div>
+
+				<Card className="border-purple-500/20 bg-black/40 backdrop-blur-sm">
+					<CardContent className="p-6">
+						<Tabs value={selectedTab} onValueChange={setSelectedTab}>
+							<TabsList className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-transparent mb-6">
+								{endpoints.map((endpoint) => (
+									<TabsTrigger
+										key={endpoint.name}
+										value={endpoint.name}
+										className="data-[state=active]:bg-purple-900/40 data-[state=active]:text-purple-100 data-[state=active]:border-purple-500/50 border border-purple-500/20 bg-black/20 text-purple-100/70 hover:bg-purple-900/20"
+									>
+										{endpoint.name}
+									</TabsTrigger>
+								))}
+							</TabsList>
+
+							{endpoints.map((endpoint) => (
+								<TabsContent key={endpoint.name} value={endpoint.name}>
+									<div className="space-y-4">
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-3">
+												<Badge
+													className="bg-purple-600 hover:bg-purple-500 text-white"
+													variant="secondary"
+												>
+													{endpoint.method}
+												</Badge>
+												<code className="rounded bg-purple-900/30 px-2 py-1 text-sm text-purple-200">
+													{endpoint.endpoint}
+												</code>
+											</div>
+											<motion.button
+												whileHover={{ scale: 1.05 }}
+												whileTap={{ scale: 0.95 }}
+												onClick={() =>
+													copyToClipboard(endpoint.endpoint, endpoint.name)
+												}
+												className="inline-flex items-center gap-1 rounded-lg bg-purple-900/30 px-3 py-1 text-sm text-purple-200 hover:bg-purple-900/50 transition-colors"
+											>
+												{copiedEndpoint === endpoint.name ? (
+													"Copied!"
+												) : (
+													<>
+														<Copy className="h-4 w-4" /> Copy
+													</>
+												)}
+											</motion.button>
+										</div>
+
+										<p className="text-purple-100/70">
+											{endpoint.description}
+										</p>
+
+										<div className="grid gap-4 lg:grid-cols-2">
+											<div>
+												<h4 className="text-sm font-semibold text-purple-200 mb-2">
+													Request
+												</h4>
+												<pre className="rounded-lg bg-black/60 p-4 text-sm text-purple-100/90 overflow-x-auto">
+													{endpoint.request}
+												</pre>
+											</div>
+											<div>
+												<h4 className="text-sm font-semibold text-purple-200 mb-2">
+													Response
+												</h4>
+												<pre className="rounded-lg bg-black/60 p-4 text-sm text-purple-100/90 overflow-x-auto">
+													{endpoint.response}
+												</pre>
+											</div>
+										</div>
+									</div>
+								</TabsContent>
+							))}
+						</Tabs>
+					</CardContent>
+				</Card>
+			</motion.div>
+		</section>
+	)
 }
 

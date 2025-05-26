@@ -10,6 +10,8 @@ import { ApiAuthentication } from "@/components/api-authentication";
 import { ApiUsage } from "@/components/api-usage";
 import { ApiCTA } from "@/components/api-cta";
 import { Code, Terminal, Zap, Database, Lock, Cpu } from "lucide-react";
+import ParticleBackground from "@/components/features/particle-background";
+import { SparklesCore } from "@/components/sparkles";
 
 export default function ApiPage() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -45,47 +47,25 @@ export default function ApiPage() {
     <div className="flex min-h-screen flex-col bg-black">
       <Navbar />
       <main className="flex-1 relative overflow-hidden">
-        {/* Hero Section with Animated Background */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-black via-purple-950 to-black">
-          <div className="absolute inset-0 w-full h-full">
-            <div className="absolute inset-0 opacity-20">
-              {isLoaded && (
-                <>
-                  {[...Array(20)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute rounded-full bg-purple-500"
-                      initial={{
-                        x: Math.random() * 100 - 50 + "%",
-                        y: Math.random() * 100 - 50 + "%",
-                        scale: Math.random() * 0.5 + 0.5,
-                        opacity: Math.random() * 0.3 + 0.1,
-                      }}
-                      animate={{
-                        x: [
-                          Math.random() * 100 - 50 + "%",
-                          Math.random() * 100 - 50 + "%",
-                        ],
-                        y: [
-                          Math.random() * 100 - 50 + "%",
-                          Math.random() * 100 - 50 + "%",
-                        ],
-                      }}
-                      transition={{
-                        duration: Math.random() * 20 + 10,
-                        repeat: Number.POSITIVE_INFINITY,
-                        repeatType: "reverse",
-                      }}
-                      style={{
-                        width: Math.random() * 300 + 50,
-                        height: Math.random() * 300 + 50,
-                        filter: "blur(80px)",
-                      }}
-                    />
-                  ))}
-                </>
-              )}
-            </div>
+        {/* Hero Section with Enhanced Background */}
+        <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-black via-purple-950/50 to-black">
+          {/* Particle Background */}
+          <ParticleBackground />
+
+          {/* Additional ambient effects */}
+          <div className="absolute inset-0">
+            <SparklesCore
+              id="tsparticlesapi"
+              background="transparent"
+              minSize={0.6}
+              maxSize={1.4}
+              particleDensity={30}
+              className="w-full h-full"
+              particleColor="#FFFFFF"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-900/30 via-purple-950/50 to-black" />
+            <div className="absolute top-0 -left-[10%] w-[70%] aspect-square rounded-full bg-purple-900/30 blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 -right-[10%] w-[70%] aspect-square rounded-full bg-purple-800/30 blur-3xl animate-pulse delay-700" />
           </div>
 
           <motion.section
@@ -167,27 +147,27 @@ export default function ApiPage() {
           </motion.section>
         </div>
 
-        {/* Terminal-like Code Preview */}
+        {/* Terminal-like Code Preview with Enhanced Styling */}
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
-          className="container -mt-16 md:-mt-24 relative z-20 mb-16"
+          className="container -mt-32 md:-mt-40 relative z-20 mb-16"
         >
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg overflow-hidden shadow-[0_0_30px_rgba(124,58,237,0.3)] border border-purple-500/30">
-              <div className="bg-gray-900 px-4 py-2 flex items-center">
+            <div className="rounded-xl overflow-hidden shadow-[0_0_50px_rgba(124,58,237,0.3)] border border-purple-500/30 backdrop-blur-sm">
+              <div className="bg-black/60 backdrop-blur-md px-4 py-3 flex items-center border-b border-purple-500/20">
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
-                <div className="ml-4 text-gray-400 text-sm flex items-center">
+                <div className="ml-4 text-purple-200/80 text-sm flex items-center">
                   <Terminal className="h-4 w-4 mr-2" />
                   <span>ThinkFlowGPT API Example</span>
                 </div>
               </div>
-              <div className="bg-gray-950 p-6 text-sm font-mono">
+              <div className="bg-black/40 backdrop-blur-md p-8 text-sm font-mono">
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -354,30 +334,39 @@ export default function ApiPage() {
           </div>
         </motion.div>
 
-        {/* Content Sections */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="space-y-24 pb-24"
-        >
-          <motion.div variants={itemVariants}>
-            <ApiOverview />
+        {/* Content Sections with Enhanced Background */}
+        <div className="relative">
+          {/* Background decorations for content sections */}
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 via-black to-black" />
+          <div className="absolute inset-0">
+            <div className="absolute top-1/4 -left-1/2 w-full aspect-square bg-purple-900/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 -right-1/2 w-full aspect-square bg-purple-800/20 rounded-full blur-3xl animate-pulse delay-700" />
+          </div>
+
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="relative space-y-32 pb-24 pt-12"
+          >
+            <motion.div variants={itemVariants}>
+              <ApiOverview />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <ApiAuthentication />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <ApiEndpoints />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <ApiUsage />
+            </motion.div>
+            <motion.div variants={itemVariants}>
+              <ApiCTA />
+            </motion.div>
           </motion.div>
-          <motion.div variants={itemVariants}>
-            <ApiAuthentication />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <ApiEndpoints />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <ApiUsage />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <ApiCTA />
-          </motion.div>
-        </motion.div>
+        </div>
       </main>
       <Footer />
     </div>

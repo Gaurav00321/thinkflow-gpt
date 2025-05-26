@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import AuthForm from "@/components/auth-form";
-import ParticleBackground from "@/components/particle-background";
+import ParticleBackground from "@/components/features/particle-background";
 import AIAssistant from "@/components/ai-assistant";
 import { Navbar } from "@/components/navbar";
 
