@@ -152,7 +152,7 @@ export default function ApiPage() {
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.8 }}
-          className="container -mt-32 md:-mt-40 relative z-20 mb-16"
+          className="container -mt-32 md:-mt-30 relative z-20 mb-16"
         >
           <div className="mx-auto max-w-4xl">
             <div className="rounded-xl overflow-hidden shadow-[0_0_50px_rgba(124,58,237,0.3)] border border-purple-500/30 backdrop-blur-sm">
