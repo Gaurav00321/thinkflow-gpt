@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 type User = {
   id: string;
@@ -12,7 +12,7 @@ type User = {
 
 type AuthContextType = {
   user: User;
-  signIn: () => void;
+  signIn: (user: User) => void;
   signOut: () => void;
 };
 
@@ -24,18 +24,37 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null);
+  const [loading, setLoading] = useState(true);
 
-  const signIn = () => {
-    // Mock sign in for demo
-    setUser({
-      id: "1",
-      name: "Demo User",
-      email: "user@example.com",
-    });
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/check');
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const signIn = (userData: User) => {
+    setUser(userData);
   };
 
-  const signOut = () => {
-    setUser(null);
+  const signOut = async () => {
+    try {
+      await fetch('/api/auth/signout', { method: 'POST' });
+      setUser(null);
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
   };
 
   return (

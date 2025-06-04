@@ -1,19 +1,43 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useActionState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion } from "framer-motion"
 import { ArrowRight, Mail, User, AlertCircle } from "lucide-react"
 import { signInAction, signUpAction } from "@/lib/auth-actions"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function AuthForm() {
+  const router = useRouter()
+  const { signIn } = useAuth()
   const [activeTab, setActiveTab] = useState("signin")
   const [signInState, signInFormAction, isSigningIn] = useActionState(signInAction, null)
+  interface AuthState {
+    success?: boolean
+    error?: string
+    user?: any
+  }
+
   const [signUpState, signUpFormAction, isSigningUp] = useActionState(signUpAction, null)
+  useEffect(() => {
+    const handleSuccess = (state: AuthState | null) => {
+      if (state?.success && state?.user) {
+        signIn(state.user);
+        const timer = setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    handleSuccess(signInState as AuthState | null);
+    handleSuccess(signUpState as AuthState | null);
+  }, [signInState?.success, signUpState?.success, router, signIn])
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -45,12 +69,13 @@ export default function AuthForm() {
                 <AlertCircle className="h-4 w-4" />
                 <span className="text-sm">{signInState.error}</span>
               </div>
-            )}
-
-            {signInState?.success && (
-              <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-md text-green-300">
-                <span className="text-sm">Successfully signed in!</span>
-              </div>
+            )}            {signInState?.success && (
+              <>
+                <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-md text-green-300">
+                  <span className="text-sm">Successfully signed in! Redirecting to dashboard...</span>
+                </div>
+                {/* Redirect handled in useEffect */}
+              </>
             )}
 
             <GlowingInput
@@ -102,12 +127,13 @@ export default function AuthForm() {
                 <AlertCircle className="h-4 w-4" />
                 <span className="text-sm">{signUpState.error}</span>
               </div>
-            )}
-
-            {signUpState?.success && (
-              <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-md text-green-300">
-                <span className="text-sm">Account created successfully!</span>
-              </div>
+            )}            {signUpState?.success && (
+              <>
+                <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-md text-green-300">
+                  <span className="text-sm">Account created successfully! Redirecting to dashboard...</span>
+                </div>
+                {/* Redirect handled in useEffect */}
+              </>
             )}
 
             <GlowingInput

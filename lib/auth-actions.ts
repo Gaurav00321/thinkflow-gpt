@@ -64,9 +64,11 @@ export async function signUpAction(prevState: any, formData: FormData) {
     } catch (cookieError) {
       console.log("Cookie setting failed:", cookieError)
       // Continue without setting cookie for now
+    }    return {
+      success: true,
+      user: newUser[0],
+      redirect: "/dashboard"
     }
-
-    return { success: true, user: newUser[0] }
   } catch (error) {
     console.error("Sign up error:", error)
     return { error: "Failed to create account" }
@@ -80,6 +82,9 @@ export async function signInAction(prevState: any, formData: FormData) {
   if (!email || !password) {
     return { error: "Email and password are required" }
   }
+
+  // Add artificial delay to allow for cookie to be set
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   try {
     // Find user
@@ -118,9 +123,11 @@ export async function signInAction(prevState: any, formData: FormData) {
     } catch (cookieError) {
       console.log("Cookie setting failed:", cookieError)
       // Continue without setting cookie for now
+    }    return {
+      success: true,
+      user: { id: user[0].id, email: user[0].email, name: user[0].name },
+      redirect: "/dashboard"
     }
-
-    return { success: true, user: { id: user[0].id, email: user[0].email, name: user[0].name } }
   } catch (error) {
     console.error("Sign in error:", error)
     return { error: "Failed to sign in" }

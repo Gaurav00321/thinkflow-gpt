@@ -118,10 +118,9 @@ export default function ApiKeysPage() {
     })
   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
+  return (    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <div className="container py-6 space-y-6">
+      <div className="container py-6 space-y-6 mt-16 sm:mt-20">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
