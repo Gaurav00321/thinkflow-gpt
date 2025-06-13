@@ -96,11 +96,10 @@ export function Navbar() {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
         scrolled
-          ? "bg-background/80 backdrop-blur-lg shadow-lg"
-          : "bg-background/50 backdrop-blur-md"
+          ? "bg-background/95 backdrop-blur-xl border-b border-purple-500/20 shadow-lg shadow-purple-500/5"
+          : "bg-background/90 backdrop-blur-lg"
       }`}
     >
       <div className="container flex h-16 items-center justify-between">
@@ -108,13 +107,12 @@ export function Navbar() {
           <Link href="/" className="group flex items-center space-x-2">
             <motion.div
               whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-purple-800"
+              transition={{ duration: 0.6 }}              className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-700"
             >
-              <BrainCircuit className="h-5 w-5 text-white" />
+              <BrainCircuit className="h-5 w-5 text-white drop-shadow-[0_0_3px_rgba(168,85,247,0.8)]" />
             </motion.div>
             <motion.span
-              className="hidden sm:inline-block font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-purple-600"
+              className="hidden sm:inline-block font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-300 via-purple-500 to-purple-700 "
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -130,8 +128,7 @@ export function Navbar() {
                 onMouseEnter={() => setHoveredItem(route.href)}
                 onMouseLeave={() => setHoveredItem(null)}
                 className="relative px-2 py-1"
-              >
-                <span
+              >                <span
                   className={`relative z-10 text-sm font-medium transition-colors ${
                     route.active
                       ? "text-foreground"
@@ -139,12 +136,10 @@ export function Navbar() {
                   }`}
                 >
                   {route.label}
-                </span>
-
-                {/* Animated highlight */}
+                </span>                {/* Animated highlight */}
                 {(hoveredItem === route.href || route.active) && (
                   <motion.span
-                    className="absolute inset-0 z-0 rounded-md bg-gradient-to-r from-purple-500/10 to-purple-700/10"
+                    className="absolute inset-0 z-0 rounded-md bg-gradient-to-r from-purple-500 to-purple-700 "
                     layoutId="navbar-highlight"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
