@@ -166,9 +166,9 @@ function FeatureCard({
           >
             <span className="relative">
               Learn more
-              <span className="absolute inset-x-0 -bottom-0.5 h-px bg-gradient-to-r from-purple-300/0 via-purple-300/90 to-purple-300/0 opacity-0 group-hover/link:opacity-100 transition-all duration-300" />
+              <span className="absolute inset-x-0 -bottom-0.5 h-px bg-gradient-to-r from-purple-300/0 via-purple-300/90 to-purple-300/0 opacity-0 group-hover/link:opacity-100 transition-all duration-300 ease-out" />
             </span>
-            <ArrowRight className="ml-2 h-4 w-4 transform transition-all duration-300 group-hover/link:translate-x-1 group-hover/link:text-purple-300" />
+            <ArrowRight className="ml-2 h-4 w-4 transform transition-all duration-300 ease-out group-hover/link:translate-x-1 group-hover/link:text-purple-300" />
           </motion.div>
         </Link>
       </div>

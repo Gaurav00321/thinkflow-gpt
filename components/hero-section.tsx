@@ -90,7 +90,7 @@ export function HeroSection() {
               >
                 <span className="flex items-center">
                   <span className="mr-2">Discover Possibilities</span>
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
+                  <ArrowRight className="h-4 w-5 group-hover:translate-x-1 transition-transform duration-300" />
                 </span>
               </Button>
             </Link>
