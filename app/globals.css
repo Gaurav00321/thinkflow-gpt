@@ -1,3 +1,5 @@
+@import '../styles/prism-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,12 +8,11 @@
   0% {
     transform: translateX(-100%) rotate(45deg);
   }
+
   100% {
     transform: translateX(200%) rotate(45deg);
   }
 }
-
-@import '../styles/prism-theme.css';
 
 @layer base {
   :root {
@@ -84,6 +85,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -94,6 +96,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -104,6 +107,7 @@
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -199,8 +203,10 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Thin scrollbar styling */

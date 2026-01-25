@@ -4,7 +4,13 @@ import { neon } from "@neondatabase/serverless"
 import bcrypt from "bcryptjs"
 import { cookies } from "next/headers"
 
-const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL!)
+const getSql = () => {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  if (!url) {
+    throw new Error("Database configuration missing");
+  }
+  return neon(url);
+}
 
 export async function signUpAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string
@@ -26,6 +32,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
 
   try {
     // Check if user already exists
+    const sql = getSql();
     const existingUser = await sql`
       SELECT id FROM users WHERE email = ${email}
     `
@@ -37,6 +44,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12)
 
+    // Create user
     // Create user
     const newUser = await sql`
       INSERT INTO users (email, password_hash, name)
@@ -64,7 +72,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
     } catch (cookieError) {
       console.log("Cookie setting failed:", cookieError)
       // Continue without setting cookie for now
-    }    return {
+    } return {
       success: true,
       user: newUser[0],
       redirect: "/dashboard"
@@ -88,6 +96,8 @@ export async function signInAction(prevState: any, formData: FormData) {
 
   try {
     // Find user
+    // Find user
+    const sql = getSql();
     const user = await sql`
       SELECT id, email, name, password_hash FROM users WHERE email = ${email}
     `
@@ -123,7 +133,7 @@ export async function signInAction(prevState: any, formData: FormData) {
     } catch (cookieError) {
       console.log("Cookie setting failed:", cookieError)
       // Continue without setting cookie for now
-    }    return {
+    } return {
       success: true,
       user: { id: user[0].id, email: user[0].email, name: user[0].name },
       redirect: "/dashboard"
