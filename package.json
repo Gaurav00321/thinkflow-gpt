@@ -61,7 +61,7 @@
     "immer": "latest",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
-    "next": "15.1.0",
+    "next": "15.4.10",
     "next-themes": "latest",
     "prism": "^4.1.2",
     "prism-react-renderer": "^2.4.1",
