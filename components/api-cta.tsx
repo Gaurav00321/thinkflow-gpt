@@ -1,10 +1,25 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Code, Rocket } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
+import { useAuthModal } from "@/components/auth/auth-modal-provider"
 
 export function ApiCTA() {
+  const { user } = useAuth();
+  const { openAuthModal } = useAuthModal();
+  const router = useRouter();
+
+  const handleCreateApiClick = () => {
+    if (user) {
+      router.push("/dashboard/api-keys"); // Or just /dashboard if api-keys section isn't its own route yet, but user asked for specific section link behavior
+    } else {
+      openAuthModal();
+    }
+  };
+
   return (
     <section className="container py-12 md:py-24 relative">
       {/* Background decorations */}
@@ -54,20 +69,17 @@ export function ApiCTA() {
                     <Code className="h-5 w-5 text-purple-400" />
                   </div>
                   <CardTitle className="text-xl text-purple-50 group-hover:text-white transition-colors">
-                    Get Your API Key
+                    Create your own API
                   </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-purple-100/80 group-hover:text-purple-100/90 transition-colors">
-                  Subscribe to our Pro or Enterprise plan to get access to the ThinkFlowGPT API. Generate your API key
-                  from your dashboard and start integrating AI into your applications.
+                  Generate your unique API key to start integrating ThinkFlowGPT's powerful AI models into your own applications today.
                 </p>
               </CardContent>
               <CardFooter>
-                <Link href="/pricing" className="w-full">
-                  <Button className="w-full bg-purple-600 hover:bg-purple-500 text-white">View Pricing</Button>
-                </Link>
+                  <Button onClick={handleCreateApiClick} className="w-full bg-purple-600 hover:bg-purple-500 text-white">Create API Key</Button>
               </CardFooter>
             </Card>
           </motion.div>

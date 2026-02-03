@@ -34,9 +34,9 @@ export function HeroSection() {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-              The Ultimate AI-Powered SaaS for{" "}
+              Experience the Future of{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600">
-                Businesses & Students
+                Work & Innovation
               </span>
             </h1>
           </motion.div>
@@ -45,55 +45,49 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-gray-300 text-xl mb-10 max-w-2xl mx-auto"
+            className="text-gray-400 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-light"
           >
-            Seamless AI-assisted coding, workflow automation, and interactive
-            conversations with cutting-edge AI models.
+            Advanced AI assistance for coding, writing, and complex problem-solving.
+            Seamlessly integrated into your daily workflow.
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-5"
-          >            <Link href="/chat">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white h-12 px-8 rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105 transform transition-all duration-300 group"
-              >
-                <span className="flex items-center">
-                  <span className="mr-2">Start Creating</span>
-                  <span className="relative group-hover:translate-x-1 transition-transform duration-300">
-                    <span className="absolute top-0 -left-3 h-full w-8 bg-gradient-to-r from-purple-600/0 via-white/20 to-purple-600/0 rotate-45 animate-shimmer" />
-                    <svg
-                      className="w-5 h-5 group-hover:scale-110 transition-transform"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 10V3L4 14h7v7l9-11h-7z"
-                      />
-                    </svg>
-                  </span>
-                </span>
-              </Button>
-            </Link>
-            <Link href="/features">
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-purple-500 hover:border-purple-400 hover:bg-purple-500/10 h-12 px-8 rounded-full group hover:scale-105 transform transition-all duration-300 backdrop-blur-sm"
-              >
-                <span className="flex items-center">
-                  <span className="mr-2">Discover Possibilities</span>
-                  <ArrowRight className="h-4 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </span>
-              </Button>
-            </Link>
+            className="w-full max-w-3xl mx-auto"
+          >
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const input = form.elements.namedItem('prompt') as HTMLInputElement;
+                if (input.value.trim()) {
+                  window.location.href = `/chat?message=${encodeURIComponent(input.value)}`;
+                }
+              }}
+              className="relative flex items-center w-full"
+            >
+              <div className="relative w-full group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 blur"></div>
+                <div className="relative flex items-center bg-black rounded-2xl p-2">
+                  <input
+                    name="prompt"
+                    type="text"
+                    placeholder="Ask anything or generate code..."
+                    className="w-full bg-transparent text-white border-none focus:ring-0 placeholder-gray-500 text-lg px-4 py-3"
+                    autoComplete="off"
+                  />
+                  <Button 
+                    type="submit"
+                    size="icon"
+                    className="h-12 w-12 rounded-xl bg-purple-600 hover:bg-purple-500 transition-colors ml-2"
+                  >
+                    <ArrowRight className="h-6 w-6 text-white" />
+                  </Button>
+                </div>
+              </div>
+            </form>
           </motion.div>
         </div>
       </div>

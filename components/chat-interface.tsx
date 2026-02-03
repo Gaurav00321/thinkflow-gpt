@@ -30,6 +30,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useRouter } from "next/navigation";
+import { getChat } from "@/app/actions/chat";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { AvatarImage } from "@/components/ui/avatar";
 
 type Message = {
   id: string;
@@ -138,23 +143,28 @@ const DANGEROUS_CODE_PATTERNS = [
 
 interface ChatInterfaceProps {
   mode: "chat" | "code";
+  initialMessage?: string;
+  chatId?: string;
   securityEnabled?: boolean;
   logSecurityEvent?: (eventType: string, details: any) => void;
 }
 
 export function ChatInterface({
   mode,
+  initialMessage,
+  chatId,
   securityEnabled = true,
   logSecurityEvent,
 }: ChatInterfaceProps) {
   const { toast } = useToast();
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialMessage || "");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { addChat } = useChatStore();
+  const { addChat, addMessage } = useChatStore();
+  const { user } = useAuth();
   const [typingIndicator, setTypingIndicator] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [securityBlocked, setSecurityBlocked] = useState(false);
@@ -164,6 +174,48 @@ export function ChatInterface({
   const [temporaryBan, setTemporaryBan] = useState(false);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | undefined>(chatId);
+  const [remainingMessages, setRemainingMessages] = useState<number | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const router = useRouter();
+
+  // Load chat history if chatId is provided, or reset if not
+  useEffect(() => {
+    if (chatId) {
+      setCurrentChatId(chatId);
+      const loadChat = async () => {
+        setIsLoading(true);
+        try {
+          const chat = await getChat(chatId);
+          if (chat && chat.messages) {
+            setMessages(chat.messages.map((msg: any) => ({
+              id: msg.id,
+              role: msg.role,
+              content: msg.content,
+              timestamp: new Date(msg.created_at || new Date())
+            })));
+          }
+        } catch (error) {
+          toast({
+            title: "Error loading chat",
+            description: "Could not load chat history.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadChat();
+    } else {
+      // Reset for new chat
+      setCurrentChatId(undefined);
+      setMessages([]);
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }
+  }, [chatId]);
 
   const generalSuggestions = [
     "Tell me about workflow automation...",
@@ -379,17 +431,16 @@ export function ChatInterface({
       .replace(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g, "[REDACTED_IP]");
   };
 
-  // Enhanced handleSubmit with command processing
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  // Shared message processing logic
+  const processMessage = async (messageContent: string) => {
+    if (!messageContent.trim() || isLoading) return;
 
     // Enhanced security validation
     if (securityEnabled) {
       // Check for identity manipulation attempts
-      if (input.toLowerCase().includes("rohit")) {
+      if (messageContent.toLowerCase().includes("rohit")) {
         internalLogSecurityEvent("unauthorized_founder_mention", {
-          input: input.slice(0, 100),
+          input: messageContent.slice(0, 100),
         });
 
         toast({
@@ -403,10 +454,10 @@ export function ChatInterface({
 
       // Check for attempts to update founder information
       if (
-        /update.*knowledge|change.*founder|correct.*information/i.test(input)
+        /update.*knowledge|change.*founder|correct.*information/i.test(messageContent)
       ) {
         internalLogSecurityEvent("founder_modification_attempt", {
-          input: input.slice(0, 100),
+          input: messageContent.slice(0, 100),
         });
 
         toast({
@@ -419,9 +470,9 @@ export function ChatInterface({
       }
 
       // Validate input
-      if (!isValidInput(input)) {
+      if (!isValidInput(messageContent)) {
         internalLogSecurityEvent("invalid_input", {
-          input: input.slice(0, 100),
+          input: messageContent.slice(0, 100),
         });
 
         toast({
@@ -437,13 +488,12 @@ export function ChatInterface({
         toast({
           title: "Rate limit exceeded",
           description: "Please wait before sending more messages.",
-          variant: "destructive",
         });
         return;
       }
 
       // Check for suspicious patterns
-      if (containsSuspiciousPatterns(input)) {
+      if (containsSuspiciousPatterns(messageContent)) {
         setSecurityBlocked(true);
         setConsecutiveBlockedAttempts((prev) => prev + 1);
 
@@ -457,7 +507,7 @@ export function ChatInterface({
       }
 
       // Check for dangerous code
-      if (containsDangerousCode(input)) {
+      if (containsDangerousCode(messageContent)) {
         toast({
           title: "Security Alert",
           description:
@@ -469,8 +519,8 @@ export function ChatInterface({
     }
 
     // Handle commands
-    if (input.startsWith("/")) {
-      if (handleCommand(input)) {
+    if (messageContent.startsWith("/")) {
+      if (handleCommand(messageContent)) {
         setInput("");
         return;
       }
@@ -494,11 +544,18 @@ export function ChatInterface({
     const userMessage: Message = {
       id: uuidv4(),
       role: "user",
-      content: input.trim(),
+      content: messageContent.trim(),
       timestamp: new Date(),
     };
 
+    // Optimistic Update: Add to local UI state immediately
     setMessages((prev) => [...prev, userMessage]);
+    
+    // Optimistic Update: Sync with Global Store immediately if chat exists
+    if (currentChatId) {
+        addMessage(currentChatId, userMessage);
+    }
+
     setInput("");
     setIsLoading(true);
     setTypingIndicator(true);
@@ -535,11 +592,28 @@ export function ChatInterface({
             organization: THINKFLOW_IDENTITY.organization,
             securityLevel: THINKFLOW_IDENTITY.securityLevel,
           },
+          chatId: currentChatId,
         }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorData = await response.json().catch(() => ({}));
+        
+        if (response.status === 403) {
+          if (errorData.code === 'LIMIT_REACHED') {
+            setShowUpgradeModal(true);
+            setIsLoading(false);
+            setTypingIndicator(false);
+            return;
+          } else if (errorData.code === 'ANON_LIMIT_REACHED') {
+             setShowLoginModal(true);
+             setIsLoading(false);
+             setTypingIndicator(false);
+             return;
+          }
+        }
+
+        const errorText = errorData.error || await response.text();
         internalLogSecurityEvent("api_error", {
           status: response.status,
           error: errorText,
@@ -557,6 +631,19 @@ export function ChatInterface({
         });
         // Log the missing header but don't throw an error
         console.warn("Security header verification failed - continuing anyway");
+      }
+
+      // Capture Chat ID from header
+      const newChatId = response.headers.get("X-Chat-Id");
+      if (newChatId && newChatId !== currentChatId) {
+        setCurrentChatId(newChatId);
+        // Update URL without reload
+        window.history.pushState({}, "", `/chat?id=${newChatId}`);
+      }
+
+      const remaining = response.headers.get("X-Remaining");
+      if (remaining) {
+        setRemainingMessages(parseInt(remaining));
       }
 
       let data;
@@ -592,14 +679,22 @@ export function ChatInterface({
       setConsecutiveBlockedAttempts(0); // Reset on successful interaction
 
       // Save to chat history
-      addChat({
-        id: uuidv4(),
-        title:
-          userMessage.content.slice(0, 30) +
-          (userMessage.content.length > 30 ? "..." : ""),
-        messages: [...messages, userMessage, assistantMessage],
-        createdAt: new Date(),
-      });
+      const assistantMessageWithId = { ...assistantMessage, timestamp: new Date() }; // Ensure timestamp
+      
+      if (currentChatId) {
+          // If we have a chat ID, just add the assistant message (user message added optimistically)
+          addMessage(currentChatId, assistantMessageWithId);
+      } else {
+          // New Chat: Create full entry
+           addChat({
+            id: uuidv4(), // Use the new chat ID if available from headers? limiting to optimistic new UUID for now if not in header
+            title:
+              userMessage.content.slice(0, 30) +
+              (userMessage.content.length > 30 ? "..." : ""),
+            messages: [...messages, userMessage, assistantMessageWithId],
+            createdAt: new Date(),
+          });
+      }
     } catch (error) {
       console.error("Error generating response:", error);
       internalLogSecurityEvent("response_error", {
@@ -626,6 +721,21 @@ export function ChatInterface({
       setIsLoading(false);
       setTypingIndicator(false);
     }
+  };
+
+  const hasProcessedInitialMessage = useRef(false);
+
+  useEffect(() => {
+    if (initialMessage && !hasProcessedInitialMessage.current) {
+      hasProcessedInitialMessage.current = true;
+      processMessage(initialMessage);
+    }
+  }, [initialMessage]);
+
+  // Enhanced handleSubmit with command processing
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await processMessage(input);
   };
 
   const handleCopy = (id: string, content: string) => {
@@ -786,21 +896,20 @@ export function ChatInterface({
                       )}
                     >
                       <div className="flex-shrink-0 mt-1">
-                        <Avatar className="h-8 w-8">
-                          <AvatarFallback
-                            className={cn(
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted"
-                            )}
-                          >
+                          <Avatar className="h-8 w-8">
                             {message.role === "user" ? (
-                              <User className="h-5 w-5" />
+                                <>
+                                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                                    <AvatarFallback className="bg-primary text-primary-foreground">
+                                        {user?.email?.[0]?.toUpperCase() || <User className="h-5 w-5" />}
+                                    </AvatarFallback>
+                                </>
                             ) : (
-                              <Bot className="h-5 w-5" />
+                                <AvatarFallback className="bg-muted">
+                                    <Bot className="h-5 w-5" />
+                                </AvatarFallback>
                             )}
-                          </AvatarFallback>
-                        </Avatar>
+                          </Avatar>
                       </div>
                       <div
                         className={cn(
@@ -1078,6 +1187,38 @@ export function ChatInterface({
           </form>
         </div>
       </div>
+      
+      {/* Limit Modals */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Daily Limit Reached</DialogTitle>
+            <DialogDescription>
+              You've hit your daily message limit. Upgrade to Pro for unlimited access.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => router.push('/pro')}>Upgrade to Pro</Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign in to Continue</DialogTitle>
+            <DialogDescription>
+              You've reached the free guest limit. Sign in to send more messages.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => router.push('/auth/login')}>Sign In</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remaining Counter */}
+      {remainingMessages !== null && (
+         <div className="fixed bottom-4 right-4 text-xs text-muted-foreground bg-background/80 p-2 rounded border border-border backdrop-blur-sm">
+            {remainingMessages} messages remaining
+         </div>
+      )}
     </div>
   );
 }

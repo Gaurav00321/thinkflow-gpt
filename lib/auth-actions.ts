@@ -1,16 +1,6 @@
 "use server"
 
-import { neon } from "@neondatabase/serverless"
-import bcrypt from "bcryptjs"
-import { cookies } from "next/headers"
-
-const getSql = () => {
-  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  if (!url) {
-    throw new Error("Database configuration missing");
-  }
-  return neon(url);
-}
+import { createClient } from "@/utils/supabase/server"
 
 export async function signUpAction(prevState: any, formData: FormData) {
   const email = formData.get("email") as string
@@ -31,51 +21,41 @@ export async function signUpAction(prevState: any, formData: FormData) {
   }
 
   try {
-    // Check if user already exists
-    const sql = getSql();
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `
+    const supabase = await createClient()
 
-    if (existingUser.length > 0) {
-      return { error: "User already exists with this email" }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          full_name: name,
+        },
+      },
+    })
+
+    if (error) {
+      console.error("Sign up error:", error)
+      return { error: error.message }
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12)
+    if (!data.user) {
+      return { error: "Failed to create account" }
+    }
 
-    // Create user
-    // Create user
-    const newUser = await sql`
-      INSERT INTO users (email, password_hash, name)
-      VALUES (${email}, ${passwordHash}, ${name})
-      RETURNING id, email, name
-    `
+    // Check if email confirmation is required
+    if (data.user.identities?.length === 0) {
+      return { error: "An account with this email already exists" }
+    }
 
-    // Set session cookie safely
-    try {
-      const cookieStore = await cookies()
-      cookieStore.set(
-        "user-session",
-        JSON.stringify({
-          id: newUser[0].id,
-          email: newUser[0].email,
-          name: newUser[0].name,
-        }),
-        {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-        },
-      )
-    } catch (cookieError) {
-      console.log("Cookie setting failed:", cookieError)
-      // Continue without setting cookie for now
-    } return {
+    return {
       success: true,
-      user: newUser[0],
-      redirect: "/dashboard"
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || name,
+      },
+      redirect: "/dashboard",
     }
   } catch (error) {
     console.error("Sign up error:", error)
@@ -91,52 +71,31 @@ export async function signInAction(prevState: any, formData: FormData) {
     return { error: "Email and password are required" }
   }
 
-  // Add artificial delay to allow for cookie to be set
-  await new Promise(resolve => setTimeout(resolve, 100));
-
   try {
-    // Find user
-    // Find user
-    const sql = getSql();
-    const user = await sql`
-      SELECT id, email, name, password_hash FROM users WHERE email = ${email}
-    `
+    const supabase = await createClient()
 
-    if (user.length === 0) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      console.error("Sign in error:", error)
+      return { error: error.message }
+    }
+
+    if (!data.user) {
       return { error: "Invalid email or password" }
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user[0].password_hash)
-
-    if (!isValidPassword) {
-      return { error: "Invalid email or password" }
-    }
-
-    // Set session cookie safely
-    try {
-      const cookieStore = await cookies()
-      cookieStore.set(
-        "user-session",
-        JSON.stringify({
-          id: user[0].id,
-          email: user[0].email,
-          name: user[0].name,
-        }),
-        {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7, // 7 days
-        },
-      )
-    } catch (cookieError) {
-      console.log("Cookie setting failed:", cookieError)
-      // Continue without setting cookie for now
-    } return {
+    return {
       success: true,
-      user: { id: user[0].id, email: user[0].email, name: user[0].name },
-      redirect: "/dashboard"
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || data.user.user_metadata?.full_name,
+      },
+      redirect: "/dashboard",
     }
   } catch (error) {
     console.error("Sign in error:", error)
@@ -146,8 +105,8 @@ export async function signInAction(prevState: any, formData: FormData) {
 
 export async function signOutAction() {
   try {
-    const cookieStore = await cookies()
-    cookieStore.delete("user-session")
+    const supabase = await createClient()
+    await supabase.auth.signOut()
   } catch (error) {
     console.log("Sign out error:", error)
   }
@@ -155,15 +114,18 @@ export async function signOutAction() {
 
 export async function getCurrentUser() {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("user-session")
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!sessionCookie) {
+    if (!user) {
       return null
     }
 
-    const user = JSON.parse(sessionCookie.value)
-    return user
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.user_metadata?.full_name,
+    }
   } catch (error) {
     return null
   }

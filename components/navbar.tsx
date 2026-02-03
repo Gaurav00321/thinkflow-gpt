@@ -25,9 +25,13 @@ import {
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthModal } from "@/components/auth/auth-modal-provider";
+
 export function Navbar() {
   const pathname = usePathname();
   const { user, signIn, signOut } = useAuth();
+  const { openAuthModal } = useAuthModal();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -127,6 +131,12 @@ export function Navbar() {
                 href={route.href}
                 onMouseEnter={() => setHoveredItem(route.href)}
                 onMouseLeave={() => setHoveredItem(null)}
+                onClick={(e) => {
+                   if (route.href === "/dashboard" && !user) {
+                      e.preventDefault();
+                      openAuthModal();
+                   }
+                }}
                 className="relative px-2 py-1"
               >                <span
                   className={`relative z-10 text-sm font-medium transition-colors ${
@@ -170,7 +180,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {user ? (
+            {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <motion.div
@@ -180,54 +190,62 @@ export function Navbar() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full relative overflow-hidden group"
+                    className="rounded-full relative overflow-hidden group h-9 w-9 border border-purple-500/20"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-purple-800/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <User className="h-5 w-5" />
+                    <Avatar className="h-full w-full">
+                      <AvatarImage src={user.user_metadata?.avatar_url} />
+                      <AvatarFallback className="bg-purple-900 text-purple-200 text-xs">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
                 </motion.div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 overflow-hidden">
-                <div className="flex items-center gap-2 p-2 border-b">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
+              <DropdownMenuContent align="end" className="w-56 overflow-hidden bg-black/90 backdrop-blur-xl border-purple-500/20 text-purple-100">
+                <div className="flex items-center gap-2 p-2 border-b border-purple-500/20">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center overflow-hidden">
+                     {user.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="User" className="h-full w-full object-cover" />
+                     ) : (
+                        <User className="h-4 w-4 text-white" />
+                     )}
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {user.name || "User"}
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-sm font-medium truncate">
+                      {user.user_metadata?.full_name || "User"}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {user.email || "user@example.com"}
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user.email}
                     </span>
                   </div>
                 </div>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="cursor-pointer">
+                  <Link href="/dashboard" className="cursor-pointer hover:bg-purple-900/40 focus:bg-purple-900/40">
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/api-keys" className="cursor-pointer">
+                  <Link href="/dashboard/api-keys" className="cursor-pointer hover:bg-purple-900/40 focus:bg-purple-900/40">
                     <Key className="mr-2 h-4 w-4" />
                     <span>API Keys</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard/billing" className="cursor-pointer">
+                  <Link href="/pricing" className="cursor-pointer hover:bg-purple-900/40 focus:bg-purple-900/40">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Billing</span>
+                    <span>Billing (Pro)</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
+                  <Link href="/dashboard/settings" className="cursor-pointer hover:bg-purple-900/40 focus:bg-purple-900/40">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-purple-500/20" />
                 <DropdownMenuItem
                   onClick={() => signOut()}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-red-900/20 focus:bg-red-900/20 text-red-300 focus:text-red-200"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>
@@ -235,13 +253,13 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/signin">
-              <motion.div
+            <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="relative"
               >
                 <Button
+                  onClick={openAuthModal}
                   className="relative overflow-hidden group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 border-none text-sm h-9 px-4"
                   variant="default"
                 >
@@ -250,7 +268,6 @@ export function Navbar() {
                   <Sparkles className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
                 </Button>
               </motion.div>
-            </Link>
           )}
         </div>
       </div>

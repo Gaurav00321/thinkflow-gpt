@@ -1,22 +1,29 @@
-import { neon } from "@neondatabase/serverless"
+import { createClient } from "@/utils/supabase/server"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || "")
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 500 })
-  }
-
   try {
-    const users = await sql`
-      SELECT id, email, name, created_at, updated_at 
-      FROM users 
-      ORDER BY created_at DESC
-    `
+    const supabase = await createClient()
 
-    return NextResponse.json({ users })
+    // Get the current user's session to verify auth
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // For debugging, just return the current user info
+    // Note: Listing all users requires admin API which needs service role key
+    return NextResponse.json({
+      currentUser: {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.user_metadata?.full_name,
+        created_at: user.created_at,
+      }
+    })
   } catch (error) {
-    console.error("Database error:", error)
-    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 })
+    console.error("Auth debug error:", error)
+    return NextResponse.json({ error: "Failed to fetch user" }, { status: 500 })
   }
 }

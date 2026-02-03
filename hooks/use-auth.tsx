@@ -1,64 +1,66 @@
 "use client";
 
-import type React from "react";
-
-import { createContext, useContext, useState, useEffect } from "react";
-
-type User = {
-  id: string;
-  name?: string;
-  email?: string;
-} | null;
+import { createContext, useContext, useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
 
 type AuthContextType = {
-  user: User;
-  signIn: (user: User) => void;
-  signOut: () => void;
+  user: User | null;
+  signIn: () => void; // No-op mostly, or redirects to login if needed
+  signOut: () => Promise<void>;
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   signIn: () => {},
-  signOut: () => {},
+  signOut: async () => {},
+  loading: true,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkUser = async () => {
       try {
-        const response = await fetch('/api/auth/check');
-        const data = await response.json();
-        if (data.user) {
-          setUser(data.user);
-        }
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error("Error checking auth:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
-  }, []);
+    checkUser();
 
-  const signIn = (userData: User) => {
-    setUser(userData);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  const signIn = () => {
+    // This function is less relevant with onAuthStateChange, but kept for compatibility
+    // In strict mode, we might want to trigger the modal here if not signed in
   };
 
   const signOut = async () => {
-    try {
-      await fetch('/api/auth/signout', { method: 'POST' });
-      setUser(null);
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, signIn, signOut, loading }}>
       {children}
     </AuthContext.Provider>
   );

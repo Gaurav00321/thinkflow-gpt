@@ -12,7 +12,11 @@ import { ArrowRight, Mail, User, AlertCircle } from "lucide-react"
 import { signInAction, signUpAction } from "@/lib/auth-actions"
 import { useAuth } from "@/hooks/use-auth"
 
-export default function AuthForm() {
+interface AuthFormProps {
+  onSuccess?: () => void;
+}
+
+export default function AuthForm({ onSuccess }: AuthFormProps) {
   const router = useRouter()
   const { signIn } = useAuth()
   const [activeTab, setActiveTab] = useState("signin")
@@ -27,17 +31,25 @@ export default function AuthForm() {
   useEffect(() => {
     const handleSuccess = (state: AuthState | null) => {
       if (state?.success && state?.user) {
-        signIn(state.user);
-        const timer = setTimeout(() => {
-          router.push("/dashboard");
-        }, 1000);
-        return () => clearTimeout(timer);
+        // signIn() is now a no-op or trigger, state is handled by onAuthStateChange
+        signIn();
+        
+        if (onSuccess) {
+          // If modal, just call success callback
+          onSuccess();
+        } else {
+          // Default behavior: redirect
+          const timer = setTimeout(() => {
+            router.push("/dashboard");
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
       }
     };
 
     handleSuccess(signInState as AuthState | null);
     handleSuccess(signUpState as AuthState | null);
-  }, [signInState?.success, signUpState?.success, router, signIn])
+  }, [signInState?.success, signUpState?.success, router, signIn, onSuccess])
 
   return (
     <div className="w-full space-y-4 sm:space-y-6">
@@ -238,32 +250,73 @@ function PulseButton({
 }
 
 function GoogleButton() {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true)
+    try {
+      const { createClient } = await import("@/utils/supabase/client")
+      const supabase = createClient()
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      
+      if (error) {
+        console.error("Google login failed:", error)
+        setIsLoading(false)
+      }
+      // If successful, user will be redirected, so no need to setIsLoading(false)
+    } catch (error) {
+      console.error("Google login failed:", error)
+      setIsLoading(false)
+    }
+  }
+
   return (
-    <motion.div whileHover={{ scale: 1.02 }} className="w-full">
+    <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} className="w-full">
       <Button
+        type="button"
         variant="outline"
-        className="w-full border border-purple-500/30 bg-black/30 text-white hover:bg-purple-900/20 hover:border-purple-400/50 relative overflow-hidden group"
+        onClick={handleGoogleLogin}
+        disabled={isLoading}
+        className="w-full border border-purple-500/30 bg-black/30 text-white hover:bg-purple-900/20 hover:border-purple-400/50 relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <div
           className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-600/0 via-purple-300/10 to-purple-600/0 group-hover:animate-shimmer"
           style={{ transform: "translateX(-100%)" }}
         ></div>
-        <svg
-          className="mr-2 h-4 w-4"
-          aria-hidden="true"
-          focusable="false"
-          data-prefix="fab"
-          data-icon="google"
-          role="img"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 488 512"
-        >
-          <path
-            fill="currentColor"
-            d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
-          ></path>
-        </svg>
-        Continue with Google
+        {isLoading ? (
+          <span className="flex items-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Connecting...
+          </span>
+        ) : (
+          <>
+            <svg
+              className="mr-2 h-4 w-4"
+              aria-hidden="true"
+              focusable="false"
+              data-prefix="fab"
+              data-icon="google"
+              role="img"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 488 512"
+            >
+              <path
+                fill="currentColor"
+                d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
+              ></path>
+            </svg>
+            Continue with Google
+          </>
+        )}
       </Button>
     </motion.div>
   )

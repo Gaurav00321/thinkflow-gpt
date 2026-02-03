@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
-import { ConvexClientProvider } from "@/components/convex-provider";
-import { AuthProvider } from "@/components/auth-provider";
+import { AuthModalProvider } from "@/components/auth/auth-modal-provider";
+import { AuthProvider } from "@/hooks/use-auth";
+import "./globals.css";
 
 import '@/styles/prism-theme.css';
 
@@ -76,22 +77,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthProvider>
-          <ConvexClientProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthModalProvider>
+            <AuthProvider>
               {children}
-              <Toaster />
-            </ThemeProvider>
-          </ConvexClientProvider>
-        </AuthProvider>
+            </AuthProvider>
+          </AuthModalProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-
-import "./globals.css";
