@@ -27,7 +27,9 @@ import { ChatHistory } from "@/components/chat-history";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ChatPage() {
+import { Suspense } from "react";
+
+function ChatPageContent() {
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
@@ -185,5 +187,13 @@ export default function ChatPage() {
         </main>
       </div>
     </SidebarProvider>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <ChatPageContent />
+    </Suspense>
   );
 }
