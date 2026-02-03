@@ -6,10 +6,12 @@ import { Footer } from "@/components/footer";
 import FeatureGrid from "@/components/features/feature-grid";
 import AgentSection from "@/components/agent-section";
 import { SparklesCore } from "@/components/sparkles";
+import { AuthCodeRedirector } from "@/components/auth/auth-code-redirector";
 
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
+      <AuthCodeRedirector />
       <Navbar />      <main className="flex-1">
         <HeroSection />
         <AgentSection />
