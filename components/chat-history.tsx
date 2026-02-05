@@ -55,7 +55,8 @@ export function ChatHistory() {
           ...c,
           createdAt: new Date(c.created_at),
           updatedAt: new Date(c.created_at), // Fallback if no updated_at
-          isPinned: c.is_pinned
+          isPinned: c.is_pinned,
+          messages: [] // Initialize with empty messages for store safety
       }));
       setChats(formattedChats);
     } catch (error) {

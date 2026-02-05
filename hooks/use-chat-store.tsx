@@ -86,7 +86,7 @@ export const useChatStore = create<ChatStore>()(
                 chat.id === chatId 
                     ? { 
                         ...chat, 
-                        messages: [...chat.messages, message],
+                        messages: [...(chat.messages || []), message],
                         updatedAt: new Date() // Bring to top
                       } 
                     : chat

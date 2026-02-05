@@ -58,7 +58,7 @@ function ChatPageContent() {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex h-screen w-screen overflow-hidden bg-background">
+      <div className="flex h-[100dvh] w-full overflow-hidden bg-background">
         <Sidebar variant="floating" collapsible="offcanvas" className="z-50">
           <SidebarHeader className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity">

@@ -10,7 +10,7 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const { messages, systemPrompt, chatId } = await req.json();
+    const { messages, systemPrompt, chatId, skipUserPersistence } = await req.json();
     const cookieStore = await cookies();
     const supabase = await createClient();
 
@@ -96,18 +96,31 @@ export async function POST(req: Request) {
           .select()
           .single();
 
-        if (!chatError && newChat) {
+        if (chatError) {
+          console.error("Error creating chat:", chatError);
+          return NextResponse.json({ error: "Failed to create chat session" }, { status: 500 });
+        }
+
+        if (newChat) {
           currentChatId = newChat.id;
         }
       }
 
       // Store User Message
-      if (currentChatId) {
-        await supabase.from('messages').insert({
+      // Store User Message
+      if (currentChatId && !skipUserPersistence) {
+        const { error: msgError } = await supabase.from('messages').insert({
           chat_id: currentChatId,
           role: 'user',
           content: messages[messages.length - 1].content
         });
+
+        if (msgError) {
+          console.error("Error storing user message:", msgError);
+          // Verify if user has access to this chat?
+          // If RLS fails, we might get an error here.
+          return NextResponse.json({ error: "Failed to send message. You may not have permission to edit this chat." }, { status: 403 });
+        }
       }
     }
 

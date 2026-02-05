@@ -181,20 +181,48 @@ export function ChatInterface({
   const router = useRouter();
 
   // Load chat history if chatId is provided, or reset if not
+  const lastLoadedChatId = useRef<string | null>(null);
+
   useEffect(() => {
+    // Prevent double loading for same ID (Strict Mode fix)
+    if (chatId && lastLoadedChatId.current === chatId) return;
+
     if (chatId) {
       setCurrentChatId(chatId);
+      lastLoadedChatId.current = chatId; // Mark as loaded
+      
       const loadChat = async () => {
+        // Don't clear messages immediately to prevent flicker if we have optimistic ones
+        // Only set loading if we don't have messages for this chat yet?
+        // Actually, for a *switch* to a new valid chatID, we might want to clear old ones.
+        // But if we just created it (optimistic), we don't want to wipe.
+        
         setIsLoading(true);
         try {
           const chat = await getChat(chatId);
           if (chat && chat.messages) {
-            setMessages(chat.messages.map((msg: any) => ({
+            const fetchedMessages = chat.messages.map((msg: any) => ({
               id: msg.id,
               role: msg.role,
               content: msg.content,
               timestamp: new Date(msg.created_at || new Date())
-            })));
+            }));
+            
+            // MERGE STRATEGY: 
+            // Keep optimistic messages that might be in 'messages' state but not yet in DB?
+            // Or just replace?
+            // If we are switching chats, we should replace. 
+            // If we just created this chat via the API response loop, we might have optimistic messages.
+            
+            setMessages(prev => {
+                // If the previous state has messages with the SAME ID, keep the one we have? 
+                // Or overwrite with DB truth? DB truth is usually better for timestamps etc.
+                // But if we have a "sending" message not in DB yet?
+                
+                // Simple approach: Just set it. The flicker happens because we might clear it first or double set.
+                // We are NOT clearing it above anymore.
+                return fetchedMessages;
+            });
           }
         } catch (error) {
           toast({
@@ -208,14 +236,18 @@ export function ChatInterface({
       };
       loadChat();
     } else {
-      // Reset for new chat
-      setCurrentChatId(undefined);
-      setMessages([]);
-      if (textareaRef.current) {
-        textareaRef.current.focus();
+      // Reset for new chat - ONLY if we aren't already empty or if we explicitly switched to "new"
+      // If we are already on 'new', don't flicker.
+      if (currentChatId !== undefined) {
+          setCurrentChatId(undefined);
+          setMessages([]);
+          lastLoadedChatId.current = null;
+          if (textareaRef.current) {
+            textareaRef.current.focus();
+          }
       }
     }
-  }, [chatId]);
+  }, [chatId]); // Reduced dependencies to just chatId to avoid re-triggering
 
   const generalSuggestions = [
     "Tell me about workflow automation...",
@@ -786,6 +818,7 @@ export function ChatInterface({
             .slice(0, -1)
             .map(({ role, content }) => ({ role, content })),
           systemPrompt,
+          skipUserPersistence: true, // Prevent re-saving the user message
         }),
       });
 
