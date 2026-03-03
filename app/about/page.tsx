@@ -309,10 +309,7 @@ export default function AboutPage() {
           <div className="bg-gradient-to-r from-purple-900/30 to-black p-6 rounded-xl border border-purple-400/30">
             <h3 className="text-xl font-bold mb-3 text-white">Who is Gaurav Upadhyay?</h3>
             <p className="text-white/90">
-              Gaurav Upadhyay is a software developer, AI innovator, and the founder of ThinkFlowGPT. He is currently
-              pursuing an Integrated Master of Computer Applications (IMCA) at Parul University. Gaurav specializes in
-              automation, cloud technologies, and machine learning, and is passionate about making advanced AI tools
-              accessible to everyone.
+              Gaurav Upadhyay is the Founder of ThinkFlowGPT, an AI-driven workflow automation startup revolutionizing business processes with intelligent automation. A passionate software developer and AI enthusiast, Gaurav Upadhyay is dedicated to building innovative, user-centric solutions.
             </p>
           </div>
 
