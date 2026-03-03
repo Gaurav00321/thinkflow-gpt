@@ -9,20 +9,26 @@ import "./globals.css";
 
 import '@/styles/prism-theme.css';
 
+import Script from "next/script";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ThinkFlowGPT - AI-Powered Workflow Automation Assistant",
+  title: {
+    template: "%s | ThinkFlowGPT - AI Workflow Automation Platform",
+    default: "ThinkFlowGPT - AI Workflow Automation Assistant",
+  },
   description:
-    "ThinkFlowGPT, founded by Gaurav Upadhyay, is an AI-driven platform that streamlines workflows for businesses and students. Simplify tasks, boost productivity, and automate with intelligence.",
+    "ThinkFlowGPT, founded by Gaurav Upadhyay, is an intelligent AI workflow automation platform that streamlines operations for businesses and students. Automate tasks with agentic intelligence.",
   metadataBase: new URL("https://thinkflowgpt.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
   keywords: [
     "ThinkFlowGPT",
     "AI workflow automation",
     "AI productivity assistant",
     "workflow automation SaaS",
-    "AI for students",
-    "AI for startups",
     "automate business tasks",
     "student productivity tools",
     "Gaurav Upadhyay AI",
@@ -90,6 +96,71 @@ export default function RootLayout({
           </AuthModalProvider>
           <Toaster />
         </ThemeProvider>
+        <Script
+          id="global-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://thinkflowgpt.vercel.app/#organization",
+                  name: "ThinkFlowGPT",
+                  url: "https://thinkflowgpt.vercel.app",
+                  logo: {
+                    "@type": "ImageObject",
+                    url: "https://thinkflowgpt.vercel.app/og-image.png",
+                  },
+                  sameAs: [
+                    "https://twitter.com/ThinkFlowGPT",
+                    "https://github.com/ThinkFlowGPT",
+                  ],
+                  founder: {
+                    "@type": "Person",
+                    "@id": "https://thinkflowgpt.vercel.app/#founder",
+                    name: "Gaurav Upadhyay",
+                    sameAs: ["https://gauravupadhyay.vercel.app"],
+                    knowsAbout: ["Artificial Intelligence", "Workflow Automation"],
+                  },
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://thinkflowgpt.vercel.app/#website",
+                  url: "https://thinkflowgpt.vercel.app",
+                  name: "ThinkFlowGPT",
+                  publisher: {
+                    "@id": "https://thinkflowgpt.vercel.app/#organization",
+                  },
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target:
+                      "https://thinkflowgpt.vercel.app/search?q={search_term_string}",
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": "https://thinkflowgpt.vercel.app/#software",
+                  name: "ThinkFlowGPT",
+                  applicationCategory: "BusinessApplication",
+                  operatingSystem: "Web",
+                  url: "https://thinkflowgpt.vercel.app",
+                  provider: {
+                    "@id": "https://thinkflowgpt.vercel.app/#organization",
+                  },
+                  description:
+                    "An AI-native workflow automation platform leveraging agentic AI.",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0",
+                    priceCurrency: "USD",
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </body>
     </html>
   );

@@ -7,8 +7,10 @@ import { Code2, Workflow, Braces, Terminal, GitBranch } from "lucide-react"
 export function FloatingPaper({ count = 5 }) {
   const icons = [Code2, Workflow, Braces, Terminal, GitBranch]
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     // Update dimensions only on client side
     setDimensions({
       width: window.innerWidth,
@@ -28,7 +30,7 @@ export function FloatingPaper({ count = 5 }) {
 
   return (
     <div className="relative w-full h-full">
-      {Array.from({ length: count }).map((_, i) => (
+      {mounted && Array.from({ length: count }).map((_, i) => (
         <motion.div
           key={i}
           className="absolute"

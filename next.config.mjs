@@ -8,6 +8,7 @@ try {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['prismjs'],
+  trailingSlash: false,
 
   typescript: {
     ignoreBuildErrors: true,
